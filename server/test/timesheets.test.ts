@@ -27,12 +27,13 @@ beforeEach(async () => {
 const save = (lines: unknown[], week = WEEK) => api('PUT', url(week), { lines });
 const hours = (...h: number[]) => [...h, 0, 0, 0, 0, 0, 0, 0].slice(0, 7);
 
-/** Puts one day's time entry on an invoice, the way invoicing will. */
-async function invoiceEntry(sheetId: string, date: string) {
+/** Puts one task's hours on one day onto an invoice, the way invoicing will. */
+async function invoiceEntry(sheetId: string, taskId: string, date: string) {
   const { rows: [entry] } = await pool.query(
     `SELECT te.id, te.hours FROM time_entries te JOIN timesheet_lines tl ON tl.id = te.timesheet_line_id
-     WHERE tl.timesheet_id = $1 AND te.work_date = $2 LIMIT 1`, [sheetId, date],
+     WHERE tl.timesheet_id = $1 AND tl.task_id = $2 AND te.work_date = $3`, [sheetId, taskId, date],
   );
+  assert.ok(entry, 'no time entry to invoice');
   const { rows: [acct] } = await pool.query('SELECT account_id FROM projects WHERE id = $1', [project.id]);
   const { rows: [inv] } = await pool.query(
     `INSERT INTO invoices (number, account_id) VALUES ('T-' || gen_random_uuid(), $1) RETURNING id`, [acct.account_id],
@@ -230,7 +231,7 @@ describe('copy previous week', () => {
 describe('invoiced hours', () => {
   test("can't be changed or removed", async () => {
     const sheet = (await save([{ taskId: build.id, hours: hours(8, 6) }, { taskId: meet.id, hours: hours(1) }])).body.data;
-    await invoiceEntry(sheet.id, WEEK);
+    await invoiceEntry(sheet.id, build.id, WEEK);
 
     const reload = (await api('GET', url())).body.data;
     assert.deepEqual(reload.lines[0].billed, [true, false, false, false, false, false, false]);

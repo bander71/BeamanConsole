@@ -208,6 +208,32 @@ Rules:
 - An hour can be on only one invoice. That holds even if two invoices are created at the same moment.
 - Tax applies to taxable lines only. **Tax rates are fractions: `0.0865` means 8.65%.** The prototype stored percentages.
 
+### Reports
+
+These are read-only, and the math matches the prototype's screens. Periods are `from`/`to` dates and include both ends. Leave them out for all time. The React app turns choices like "This month" or "Q3" into dates.
+
+| Request | What it returns |
+|---|---|
+| `GET /reports/budgets` | Each project and its tasks: budget vs actual hours (all statuses, all time), remaining, burn, value, cost and margin. Flat Fee value is budget hours × rate, so overruns show up as lower margin. Projects with no billable task are `internal` and show no value |
+| `GET /reports/time?from=&to=&groupBy=` | Hours, billable hours, utilization, billing value, contractor cost, margin and margin %, grouped by `client` (default), `project`, `resource` or `task`, plus totals |
+| `GET /reports/time/entries?from=&to=&limit=&offset=` | The day-lines behind that report, newest first, with value, cost, timesheet status and whether each has been billed |
+| `GET /reports/pnl?from=&to=&basis=` | Profit and loss with income and expense lines, totals, net and net margin, plus the mileage deduction for the period. See bases below |
+| `GET /reports/pnl/monthly?year=&basis=` | Income, expenses and net for each month of a year |
+| `GET /reports/receivables?asOf=` | Open invoice balances by client and by days past due: Current, 1–30, 31–60, 61–90, Over 90 |
+| `GET /reports/contractors?year=` | Each 1099 contractor: hours, cost and payments in the year, what's still owed (all time), and whether a 1099-NEC is needed (paid $2,000 or more in the year) |
+| `GET /reports/invoicing?year=` | Outstanding and overdue balances, unbilled T&M time, amount invoiced and collected in the year |
+| `GET /reports/mileage?from=&to=` | Trips, miles and deduction value (miles × IRS rate on the trip date) by month, client, vehicle and kind |
+
+Profit and loss bases (`basis=cash` is the default):
+
+- **Cash:**
+  - Income is invoice payments received, by client, plus manual ledger income.
+  - Expenses are ledger expenses.
+- **Accrual:**
+  - Income is sent invoices by issue date, by client, plus manual ledger income.
+  - Expenses are ledger expenses, but contractor cost comes from timesheet hours × cost rate instead of payments.
+- On both bases, draft and void invoices are never revenue. The mileage deduction is shown alongside but isn't counted as an expense.
+
 ### Errors
 
 Errors look like `{ "error": { "message": "...", "details": ... } }`.
@@ -233,12 +259,14 @@ src/
 └── routes/
     ├── extra.ts       Endpoints that don't fit the standard pattern
     ├── timesheets.ts  Weekly grid, status flow, copy-previous
-    └── invoices.ts    Unbilled time, drafts, lines, send/void, payments
+    ├── invoices.ts    Unbilled time, drafts, lines, send/void, payments
+    └── reports.ts     Budgets, time, P&L, receivables, contractors, mileage
 test/
 ├── helpers.ts           Starts the app against the test database
 ├── api.test.ts
 ├── timesheets.test.ts
-└── invoices.test.ts
+├── invoices.test.ts
+└── reports.test.ts      Checks every report against hand-worked numbers
 ```
 
 To add a simple table, add a definition to `resources.ts`.
@@ -246,5 +274,5 @@ To add a simple table, add a definition to `resources.ts`.
 ## Not built yet
 
 - **Invoice files:** the printable invoice and the time-detail CSV. The prototype builds these in the browser, so they may belong in the React app.
-- **Reports:** budgets, P&L and contractor 1099 totals
+- **CSV exports:** the prototype's CSV downloads (time entries, ledger, accounts, trips). The report endpoints return the same data as JSON, so the React app can build the files.
 - **Sign-in and permissions.** Right now anyone who can reach the API can change anything, so run it only on your own machine until sign-in is added.
