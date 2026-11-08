@@ -7,6 +7,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { camelRow, pool } from '../db.ts';
+import { notFound } from '../errors.ts';
 
 export const reportRoutes = Router();
 
@@ -373,6 +374,67 @@ reportRoutes.get('/reports/invoicing', async (req, res) => {
       collected: round2(collected.amount),
     },
   });
+});
+
+// ---- accounts ---------------------------------------------------------------------------------------
+// GET /reports/accounts?year=
+// For every account: linked people, hours (all time and in the year), billing
+// value and miles in the year, and the last activity date (latest of work,
+// logged notes and trips). Feeds the Accounts list and its sorting.
+//
+// GET /reports/accounts/:id?year=
+// The same numbers for one account, plus its tasks with hours.
+
+const ACCOUNT_STATS = `
+  SELECT a.id AS account_id,
+    (SELECT count(*)::int FROM contacts c WHERE c.account_id = a.id) AS people,
+    coalesce(w.hours, 0) AS hours, coalesce(w.hours_year, 0) AS hours_year, coalesce(w.value_year, 0) AS value_year,
+    coalesce(tr.miles_year, 0) AS miles_year, coalesce(tr.trips_year, 0) AS trips_year, coalesce(tr.trips, 0) AS trips,
+    nullif(greatest(coalesce(w.last_date, '0001-01-01'), coalesce(ac.last_date, '0001-01-01'), coalesce(tr.last_date, '0001-01-01')), '0001-01-01') AS last_activity
+  FROM accounts a
+  LEFT JOIN (
+    SELECT account_id, sum(hours) AS hours,
+           sum(hours) FILTER (WHERE work_date BETWEEN $1 AND $2) AS hours_year,
+           sum(hours * bill_rate) FILTER (WHERE work_date BETWEEN $1 AND $2) AS value_year,
+           max(work_date) AS last_date
+    FROM time_detail GROUP BY account_id) w ON w.account_id = a.id
+  LEFT JOIN (SELECT account_id, max(activity_date) AS last_date FROM activities GROUP BY account_id) ac ON ac.account_id = a.id
+  LEFT JOIN (
+    SELECT account_id, count(*)::int AS trips,
+           count(*) FILTER (WHERE trip_date BETWEEN $1 AND $2)::int AS trips_year,
+           sum(miles) FILTER (WHERE trip_date BETWEEN $1 AND $2) AS miles_year,
+           max(trip_date) AS last_date
+    FROM trips GROUP BY account_id) tr ON tr.account_id = a.id`;
+
+const accountStat = (row: any) => {
+  const r = camelRow(row) as any;
+  return { ...r, hours: round2(r.hours), hoursYear: round2(r.hoursYear), valueYear: round2(r.valueYear), milesYear: round2(r.milesYear) };
+};
+
+reportRoutes.get('/reports/accounts', async (req, res) => {
+  const y = year.default(thisYear()).parse(req.query.year);
+  const { rows } = await pool.query(ACCOUNT_STATS, [`${y}-01-01`, `${y}-12-31`]);
+  res.json({ data: { year: y, accounts: rows.map(accountStat) } });
+});
+
+reportRoutes.get('/reports/accounts/:id', async (req, res) => {
+  const y = year.default(thisYear()).parse(req.query.year);
+  const id = req.params.id;
+  if (!/^[0-9a-f-]{36}$/i.test(id)) throw notFound('Account');
+  const { rows: [stats] } = await pool.query(`SELECT * FROM (${ACCOUNT_STATS}) s WHERE account_id = $3`, [`${y}-01-01`, `${y}-12-31`, id]);
+  if (!stats) throw notFound('Account');
+  const { rows: tasks } = await pool.query(
+    `SELECT t.id AS task_id, t.task_number, t.name, t.type, t.bill_rate, t.active, p.code AS project_code, p.name AS project_name,
+            r.name AS resource_name,
+            coalesce(sum(d.hours) FILTER (WHERE d.work_date BETWEEN $2 AND $3), 0) AS hours_year,
+            coalesce(sum(d.hours), 0) AS hours
+     FROM tasks t JOIN projects p ON p.id = t.project_id JOIN resources r ON r.id = t.resource_id
+     LEFT JOIN time_detail d ON d.task_id = t.id
+     WHERE p.account_id = $1
+     GROUP BY t.id, p.code, p.name, r.name ORDER BY t.task_number`,
+    [id, `${y}-01-01`, `${y}-12-31`],
+  );
+  res.json({ data: { year: y, ...accountStat(stats), tasks: tasks.map((t) => ({ ...camelRow(t), hours: round2(t.hours), hoursYear: round2(t.hours_year) })) } });
 });
 
 // ---- mileage ----------------------------------------------------------------------------------------

@@ -219,6 +219,30 @@ describe('invoicing summary', () => {
   });
 });
 
+describe('accounts', () => {
+  test('people, hours, billing, miles and last activity per account', async () => {
+    await create('/contacts', { name: 'Ann', accountId: acme.id });
+    await create('/contacts', { name: 'Bob', accountId: acme.id });
+    await create('/activities', { accountId: beta.id, activityDate: '2026-12-01', body: 'Renewal call' });
+    const { data } = (await api('GET', '/reports/accounts?year=2026')).body;
+    const byId = new Map(data.accounts.map((a: any) => [a.accountId, a]));
+    const a: any = byId.get(acme.id), b: any = byId.get(beta.id);
+    assert.deepEqual([a.people, a.hours, a.hoursYear, a.valueYear, a.milesYear, a.tripsYear, a.lastActivity],
+      [2, 36, 36, 6000, 100, 1, '2026-11-04'], 'Acme: 24h x 150 + 12h x 200; last work 11/04');
+    assert.equal(b.lastActivity, '2026-12-01', 'a logged note counts as activity');
+    assert.equal((await api('GET', '/reports/accounts?year=2025')).body.data.accounts.find((x: any) => x.accountId === acme.id).hoursYear, 0);
+  });
+
+  test('one account with its tasks', async () => {
+    const { data } = (await api('GET', `/reports/accounts/${acme.id}?year=2026`)).body;
+    assert.equal(data.valueYear, 6000);
+    assert.deepEqual(data.tasks.map((t: any) => [t.taskNumber, t.projectCode, t.resourceName, t.hoursYear, t.hours]),
+      [[501, 'ACME', 'Brad', 24, 24], [502, 'ACMEFF', 'Carl', 12, 12]]);
+    assert.equal((await api('GET', '/reports/accounts/00000000-0000-4000-8000-000000000000')).status, 404);
+    assert.equal((await api('GET', '/reports/accounts/nope')).status, 404);
+  });
+});
+
 describe('mileage', () => {
   test('miles and deduction by month, client, vehicle and kind', async () => {
     const { data } = (await api('GET', '/reports/mileage?from=2026-01-01&to=2026-12-31')).body;

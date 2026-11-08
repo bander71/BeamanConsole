@@ -222,6 +222,8 @@ These are read-only, and the math matches the prototype's screens. Periods are `
 | `GET /reports/receivables?asOf=` | Open invoice balances by client and by days past due: Current, 1–30, 31–60, 61–90, Over 90 |
 | `GET /reports/contractors?year=` | Each 1099 contractor: hours, cost and payments in the year, what's still owed (all time), and whether a 1099-NEC is needed (paid $2,000 or more in the year) |
 | `GET /reports/invoicing?year=` | Outstanding and overdue balances, unbilled T&M time, amount invoiced and collected in the year |
+| `GET /reports/accounts?year=` | For every account: linked people, hours (all time and in the year), billing value and miles in the year, and last activity (latest of work, notes and trips). Feeds the Accounts list |
+| `GET /reports/accounts/:id?year=` | The same for one account, plus its tasks with hours in the year and all time |
 | `GET /reports/mileage?from=&to=` | Trips, miles and deduction value (miles × IRS rate on the trip date) by month, client, vehicle and kind |
 
 Profit and loss bases (`basis=cash` is the default):
