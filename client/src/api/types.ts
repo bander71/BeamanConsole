@@ -82,6 +82,78 @@ export interface Activity {
   createdAt: string
 }
 
+export interface Resource {
+  id: string
+  name: string
+  email: string
+  contractor: boolean
+  active: boolean
+}
+
+export interface Project {
+  id: string
+  code: string
+  name: string
+  type: 'T&M' | 'Flat Fee'
+  accountId: string | null
+}
+
+export interface Task {
+  id: string
+  taskNumber: number
+  projectId: string
+  resourceId: string
+  name: string
+  type: 'T&M' | 'Flat Fee'
+  billRate: number
+  costRate: number
+  budgetHours: number
+  active: boolean
+}
+
+export type TimesheetStatus = 'draft' | 'submitted' | 'approved' | 'returned'
+
+export interface TimesheetLine {
+  id: string
+  taskId: string
+  taskNumber: number
+  taskName: string
+  taskType: string
+  taskActive: boolean
+  billRate: number
+  costRate: number
+  projectId: string
+  projectCode: string
+  projectName: string
+  accountId: string | null
+  accountName: string | null
+  note: string
+  hours: number[]
+  billed: boolean[]
+}
+
+export interface Timesheet {
+  id: string | null
+  resourceId: string
+  resourceName: string
+  weekStart: string
+  status: TimesheetStatus
+  submittedAt: string | null
+  approvedAt: string | null
+  approvedBy: string | null
+  returnNote: string
+  lines: TimesheetLine[]
+  totals: { hours: number; billableHours: number; billValue: number; cost: number; days: number[] }
+}
+
+export interface Trip {
+  id: string
+  tripDate: string
+  kind: 'business' | 'charitable'
+  resourceId: string | null
+  miles: number
+}
+
 export interface Opportunity {
   id: string
   name: string

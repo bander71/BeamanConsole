@@ -29,8 +29,13 @@ Open http://localhost:5173. The dev server passes `/api` requests to the API on 
 
 | Screen | Status |
 |---|---|
+| Timesheet | ✅ Weekly grid for any resource and week, saved as you type. Hours take decimals (1.5) or h:mm (1:30); invalid entries are flagged and not saved. Up, Down and Enter move between rows. Add and remove lines, notes per line, copy lines from last week, daily and weekly totals, and submit, approve, return (with a note), recall and reopen. Hours already on an invoice show as locked cells. The Approvals tab shows how many sheets are waiting |
 | Accounts | ✅ List with search, type filter and sorting; detail with stats, follow-ups, notes and activity, people, opportunities and timesheet work; add, edit (renaming keeps the old name as an alias, like the prototype), delete; CSV export |
-| Timesheet, Approvals, Budgets, Mileage, Pipeline, Contacts, Invoices, Accounting, Reports, Employees, Setup | Not rebuilt yet. Each shows a placeholder; use the prototype for now |
+| Approvals, Budgets, Mileage, Pipeline, Contacts, Invoices, Accounting, Reports, Employees, Setup | Not rebuilt yet. Each shows a placeholder; use the prototype for now |
+
+### How the timesheet saves
+
+Edits are kept on screen and saved 0.7 seconds after you stop typing. Adding or removing a line saves right away, and so does leaving the week or person, so a quick edit isn't lost. The panel shows "Unsaved changes…", "Saving…" or "Saved 3:42 PM". If the server refuses a save (for example, the sheet was submitted from another window, or the hours are on an invoice), the screen says why and reloads the sheet. Closing the tab with unsaved changes asks you to confirm first.
 
 ## Code layout
 
@@ -47,6 +52,7 @@ src/
 ├── components/           Shared pieces (toast messages)
 ├── views/
 │   ├── accounts/         Accounts screen: list, detail, form, data hooks
+│   ├── timesheet/        Timesheet screen: person and week picker, grid with autosave, hour cells
 │   └── NotBuiltYet.tsx   Placeholder for screens still to rebuild
 └── styles/console.css    The prototype's stylesheet
 ```

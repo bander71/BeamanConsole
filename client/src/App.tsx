@@ -4,11 +4,13 @@ import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router'
 import { api } from './api/client.ts'
 import { AccountsView } from './views/accounts/AccountsView.tsx'
 import { NotBuiltYet } from './views/NotBuiltYet.tsx'
+import { useSubmittedCount } from './views/timesheet/data.ts'
+import { TimesheetView } from './views/timesheet/TimesheetView.tsx'
 
 // Same views and order as the prototype's top bar. `built` marks the ones rebuilt in React so far.
 const NAV: { path: string; label: string; built?: boolean }[][] = [
   [
-    { path: 'timesheet', label: 'Timesheet' },
+    { path: 'timesheet', label: 'Timesheet', built: true },
     { path: 'approvals', label: 'Approvals' },
     { path: 'budgets', label: 'Budgets' },
     { path: 'mileage', label: 'Mileage' },
@@ -42,6 +44,8 @@ function ConnectionStatus() {
 export function App() {
   const navigate = useNavigate()
   const section = useLocation().pathname.split('/')[1]
+  const waiting = useSubmittedCount().data ?? 0
+  const badges: Record<string, number> = { approvals: waiting }
 
   return (
     <>
@@ -58,6 +62,7 @@ export function App() {
                 {group.map((v) => (
                   <button key={v.path} aria-current={section === v.path ? 'page' : undefined} onClick={() => navigate('/' + v.path)}>
                     {v.label}
+                    {!!badges[v.path] && <span className="badge" aria-label={`${badges[v.path]} waiting`}>{badges[v.path]}</span>}
                   </button>
                 ))}
               </Fragment>
@@ -68,7 +73,8 @@ export function App() {
       </header>
       <main>
         <Routes>
-          <Route path="/" element={<Navigate to="/accounts" replace />} />
+          <Route path="/" element={<Navigate to="/timesheet" replace />} />
+          <Route path="/timesheet" element={<TimesheetView />} />
           <Route path="/accounts" element={<AccountsView />} />
           <Route path="/accounts/:id" element={<AccountsView />} />
           {NAV.flat()
