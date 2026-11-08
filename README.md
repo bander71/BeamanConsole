@@ -20,7 +20,7 @@ The goal is to rebuild it as a full application:
 beaman-console/
 ├── legacy/   Original single-file prototype (reference for features and UI)
 ├── client/   React frontend (not started)
-├── server/   Node API (not started)
+├── server/   Node API (see server/README.md)
 ├── db/       Postgres schema and migrations (see db/README.md)
 └── docs/     Notes and design docs
 ```
@@ -28,7 +28,7 @@ beaman-console/
 ## Suggested roadmap
 
 1. **Data model.** ✅ Postgres schema in [`db/`](db/README.md), built from the prototype's data.
-2. **API.** Build Node endpoints in `server/` for each area (accounts, contacts, time, invoices, …).
+2. **API.** 🚧 [`server/`](server/README.md) has the foundation and endpoints for accounts, contacts, opportunities, people, projects, tasks, mileage and the ledger. Still to build: timesheets, invoices and reports.
 3. **Frontend.** Rebuild each screen in React in `client/`, calling the API instead of `localStorage`.
 4. **Migration.** Write a one-time import of existing `localStorage` data into Postgres.
 5. **Sign-in and roles.** Replace the prototype's editor/viewer checks with real authentication.

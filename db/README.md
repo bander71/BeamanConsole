@@ -12,17 +12,17 @@ db/
 
 ## Set up a local database
 
-The commands below use `psql` from PostgreSQL 18. Each one asks for the `postgres` user's password.
+See [server/README.md](../server/README.md#first-time-setup). In short: create the database, then run `npm run migrate` in `server/`. The runner applies each new file in `migrations/` once, inside a transaction, and records it in a `schema_migrations` table.
+
+New migration files go in `migrations/` with the next number (`002_...sql`). Don't edit a migration after it has been applied to a database you care about; add a new one instead.
+
+To run the smoke test (asks for the `postgres` password; leaves no data behind):
 
 ```bash
-createdb -U postgres beaman_console_dev
-psql -U postgres -d beaman_console_dev -v ON_ERROR_STOP=1 -f db/migrations/001_initial_schema.sql
 psql -U postgres -d beaman_console_dev -v ON_ERROR_STOP=1 -f db/tests/smoke_test.sql
 ```
 
-The last command should print `Smoke test passed`. It leaves no data behind.
-
-Once the Node server exists, a migration tool will apply these files automatically.
+It should print `Smoke test passed`.
 
 ## Conventions
 

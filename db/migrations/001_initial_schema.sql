@@ -12,8 +12,8 @@
 --   * Fixed lists (stages, types, categories) use CHECK constraints rather than
 --     Postgres enums, so adding a value is a one-line migration.
 --   * created_at / updated_at on every table; updated_at is kept by a trigger.
-
-BEGIN;
+--
+-- Apply with `npm run migrate` in server/, which runs each file in a transaction.
 
 -- ---------------------------------------------------------------------------
 -- Helpers
@@ -496,5 +496,3 @@ BEGIN
   END LOOP;
 END;
 $$;
-
-COMMIT;
