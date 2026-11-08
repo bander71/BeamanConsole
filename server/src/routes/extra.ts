@@ -121,7 +121,7 @@ const SETTINGS_COLUMNS: Record<string, string> = {
   taxRate: 'tax_rate', periodAnchor: 'period_anchor',
 };
 
-async function getSettings() {
+export async function getSettings() {
   const [row] = await query('SELECT * FROM invoice_settings WHERE id');
   if (row) return row;
   const [created] = await query('INSERT INTO invoice_settings DEFAULT VALUES ON CONFLICT DO NOTHING RETURNING *');

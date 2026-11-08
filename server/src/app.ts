@@ -4,6 +4,7 @@ import { pool } from './db.ts';
 import { errorHandler, HttpError } from './errors.ts';
 import { resourceDefs } from './resources.ts';
 import { extraRoutes } from './routes/extra.ts';
+import { invoiceRoutes } from './routes/invoices.ts';
 import { timesheetRoutes } from './routes/timesheets.ts';
 
 export function createApp() {
@@ -21,6 +22,7 @@ export function createApp() {
 
   api.use(extraRoutes);
   api.use(timesheetRoutes);
+  api.use(invoiceRoutes);
   for (const def of resourceDefs) api.use(def.path, crudRouter(def));
 
   api.use((req) => {

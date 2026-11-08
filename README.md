@@ -28,7 +28,7 @@ beaman-console/
 ## Suggested roadmap
 
 1. **Data model.** ✅ Postgres schema in [`db/`](db/README.md), built from the prototype's data.
-2. **API.** 🚧 [`server/`](server/README.md) has the foundation and endpoints for accounts, contacts, opportunities, people, projects, tasks, timesheets, mileage and the ledger. Still to build: invoices and reports.
+2. **API.** 🚧 [`server/`](server/README.md) has the foundation and endpoints for accounts, contacts, opportunities, people, projects, tasks, timesheets, invoices, mileage and the ledger. Still to build: reports.
 3. **Frontend.** Rebuild each screen in React in `client/`, calling the API instead of `localStorage`.
 4. **Migration.** Write a one-time import of existing `localStorage` data into Postgres.
 5. **Sign-in and roles.** Replace the prototype's editor/viewer checks with real authentication.

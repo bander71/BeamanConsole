@@ -82,4 +82,6 @@ These were checks in the prototype's JavaScript. Now the database enforces them,
 ## Not yet covered
 
 - **Users and sign-in.** The prototype treats everyone as the owner. Users, roles and permissions come with the sign-in step of the roadmap.
-- **Data import.** A script to load a prototype backup (the **Back up** button's JSON) into these tables. The prototype's built-in data has been checked against the schema and fits with no conflicts.
+- **Data import.** A script to load a prototype backup (the **Back up** button's JSON) into these tables. The prototype's built-in data has been checked against the schema and fits with no conflicts. Things the import must convert:
+  - Tax rates: the prototype stores percentages (`8.65`), but these tables store fractions (`0.0865`).
+  - Billed hours: invoice lines in the prototype point at billed hours with a `sheet|task|day` key. These must be matched to `time_entries` rows.

@@ -151,6 +151,63 @@ Rules:
 - Hours that are on an invoice (`billed: true`) can't be changed or removed, and their sheet can't be deleted.
 - Copy-previous skips tasks already on the week and tasks that are now inactive.
 
+### Invoices
+
+An invoice comes back with its lines, the time entries each time line bills, its payments and its totals:
+
+```json
+{
+  "id": "…", "number": "BC2026-0001", "accountId": "…", "accountName": "McElroy's",
+  "status": "sent", "displayStatus": "partial",
+  "billToName": "McElroy's", "billToAttn": "Accounts Payable", "billToEmail": "", "billToAddress": "",
+  "cadence": "biweekly", "periodStart": "2026-10-26", "periodEnd": "2026-11-08",
+  "issueDate": "2026-11-08", "termsDays": 30, "dueDate": "2026-12-08", "taxRate": 0.08, "memo": "",
+  "lines": [{ "id": "…", "lineNo": 1, "kind": "time", "taskId": "…", "taskNumber": 501,
+              "description": "MCE ERP — Brad Anderson", "quantity": 20, "rate": 195, "amount": 3900,
+              "taxable": false, "entries": [{ "timeEntryId": "…", "workDate": "2026-10-26", "hours": 8, "resourceName": "Brad Anderson", "note": "" }] }],
+  "payments": [{ "id": "…", "paymentDate": "2026-11-20", "amount": 1000, "method": "Check", "reference": "1042" }],
+  "totals": { "subtotal": 3900, "tax": 0, "total": 3900, "paid": 1000, "balance": 2900 }
+}
+```
+
+`status` is what's stored: `draft`, `sent` or `void`. `displayStatus` is what to show, worked out the same way as the prototype:
+
+| displayStatus | When |
+|---|---|
+| `draft`, `void` | Same as status |
+| `paid` | Sent, and nothing is owed |
+| `overdue` | Sent, past the due date, with a balance |
+| `partial` | Sent, with some payment |
+| `sent` | Sent, with no payment yet |
+
+| Request | What it does |
+|---|---|
+| `GET /invoices/unbilled?accountId=&from=&to=&includeUnapproved=&includeFlatFee=` | Billable time not yet on an invoice, grouped by account, with the lines a new invoice would get. Unapproved time is included by default; Flat Fee time isn't |
+| `POST /invoices` | Create a draft: `{ accountId, from?, to?, cadence?, issueDate?, includeUnapproved?, includeFlatFee?, blank? }`. Pulls in unbilled time, one line per task. Bill-to comes from the account; terms and tax come from invoice settings |
+| `GET /invoices?accountId=&status=&from=&to=&q=` | List with totals. `status` is a displayStatus; `from`/`to` filter on issue date; `q` searches number and client |
+| `GET /invoices/:id` | One invoice |
+| `PATCH /invoices/:id` | Edit a draft: header fields, and optionally `lines` to replace all lines (see below) |
+| `POST /invoices/:id/send` | Draft → sent (needs at least one line) |
+| `POST /invoices/:id/unsend` | Sent → draft (only with no payments) |
+| `POST /invoices/:id/void` | Sent → void (only with no payments). Keeps the lines but frees the hours to bill again |
+| `DELETE /invoices/:id` | Delete a draft, freeing its hours |
+| `POST /invoices/:id/payments` | Record a payment on a sent invoice: `{ paymentDate?, amount, method?, reference? }`. Can't be more than the balance |
+| `DELETE /invoices/:id/payments/:paymentId` | Remove a payment |
+
+Editing lines: send the full list in the order you want.
+
+- **Keep an existing line:** `{ "id", "description"?, "rate"?, "quantity"?, "taxable"? }`. The quantity on time lines comes from timesheets and can't be changed.
+- **Add a line:** `{ "kind": "manual" | "expense" | "product", "description", "quantity", "rate", "taxable"? }`. Product lines are taxable by default. Negative rates work for discounts or credits.
+- **Remove a line:** leave it out. Removing a time line frees its hours.
+
+The API works out each line's amount (quantity × rate).
+
+Rules:
+- Only drafts can be edited or deleted.
+- Invoice numbers are `<prefix><year>-0001` and count up per year, starting from `firstNumber` in settings. A number can be edited on a draft, but it must stay unique.
+- An hour can be on only one invoice. That holds even if two invoices are created at the same moment.
+- Tax applies to taxable lines only. **Tax rates are fractions: `0.0865` means 8.65%.** The prototype stored percentages.
+
 ### Errors
 
 Errors look like `{ "error": { "message": "...", "details": ... } }`.
@@ -175,17 +232,19 @@ src/
 ├── resources.ts    Field rules for each standard resource
 └── routes/
     ├── extra.ts       Endpoints that don't fit the standard pattern
-    └── timesheets.ts  Weekly grid, status flow, copy-previous
+    ├── timesheets.ts  Weekly grid, status flow, copy-previous
+    └── invoices.ts    Unbilled time, drafts, lines, send/void, payments
 test/
 ├── helpers.ts           Starts the app against the test database
 ├── api.test.ts
-└── timesheets.test.ts
+├── timesheets.test.ts
+└── invoices.test.ts
 ```
 
 To add a simple table, add a definition to `resources.ts`.
 
 ## Not built yet
 
-- **Invoices:** generate from unbilled time, lines, payments, send and void
+- **Invoice files:** the printable invoice and the time-detail CSV. The prototype builds these in the browser, so they may belong in the React app.
 - **Reports:** budgets, P&L and contractor 1099 totals
 - **Sign-in and permissions.** Right now anyone who can reach the API can change anything, so run it only on your own machine until sign-in is added.
