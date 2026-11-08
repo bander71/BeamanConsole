@@ -21,13 +21,13 @@ beaman-console/
 ├── legacy/   Original single-file prototype (reference for features and UI)
 ├── client/   React frontend (not started)
 ├── server/   Node API (not started)
-├── db/       Postgres schema, migrations, seed data (not started)
+├── db/       Postgres schema and migrations (see db/README.md)
 └── docs/     Notes and design docs
 ```
 
 ## Suggested roadmap
 
-1. **Data model.** Turn the prototype's `localStorage` data into a Postgres schema in `db/`.
+1. **Data model.** ✅ Postgres schema in [`db/`](db/README.md), built from the prototype's data.
 2. **API.** Build Node endpoints in `server/` for each area (accounts, contacts, time, invoices, …).
 3. **Frontend.** Rebuild each screen in React in `client/`, calling the API instead of `localStorage`.
 4. **Migration.** Write a one-time import of existing `localStorage` data into Postgres.
