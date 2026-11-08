@@ -111,6 +111,46 @@ The field rules for each resource are in [`src/resources.ts`](src/resources.ts).
 | `GET /settings/invoicing` | Invoice settings (company details, numbering, terms, tax) |
 | `PUT /settings/invoicing` | Update any of those fields |
 
+### Timesheets
+
+A timesheet is one resource's week, starting on a Monday. The API sends and receives it as a grid. Each line is one task, with seven daily hour values, Monday first:
+
+```json
+{
+  "id": "…", "resourceId": "…", "resourceName": "Brad Anderson",
+  "weekStart": "2026-11-02", "status": "draft",
+  "submittedAt": null, "approvedAt": null, "approvedBy": null, "returnNote": "",
+  "lines": [{
+    "id": "…", "taskId": "…", "taskNumber": 501, "taskName": "MCE ERP",
+    "projectCode": "MCERP", "accountName": "McElroy's", "billRate": 195, "costRate": 195,
+    "note": "", "hours": [6.5, 6.5, 6.5, 6.5, 2, 0, 0],
+    "billed": [false, false, false, false, false, false, false]
+  }],
+  "totals": { "hours": 28, "billableHours": 28, "billValue": 5460, "cost": 5460, "days": [6.5, 6.5, 6.5, 6.5, 2, 0, 0] }
+}
+```
+
+| Request | What it does |
+|---|---|
+| `GET /resources/:resourceId/timesheets/:weekStart` | The sheet for that week, or an empty draft (`id: null`) if none is saved |
+| `PUT /resources/:resourceId/timesheets/:weekStart` | Save the grid: `{ "lines": [{ "taskId", "note", "hours": [7 numbers] }] }`. Replaces all lines, in the order sent, and creates the sheet if needed |
+| `POST /resources/:resourceId/timesheets/:weekStart/copy-previous` | Add the task lines from the most recent earlier sheet, with zero hours |
+| `GET /timesheets?resourceId=&status=&from=&to=` | List sheets with total, billable hours and value. `status=submitted` is the approvals queue |
+| `GET /timesheets/:id` | One sheet as a grid |
+| `POST /timesheets/:id/submit` | Draft or returned → submitted (needs some hours) |
+| `POST /timesheets/:id/recall` | Submitted → draft |
+| `POST /timesheets/:id/approve` | Submitted → approved. Optional `{ "approvedBy": employeeId }` |
+| `POST /timesheets/:id/return` | Submitted → returned. Optional `{ "note": "reason" }` |
+| `POST /timesheets/:id/reopen` | Approved → draft |
+| `DELETE /timesheets/:id` | Delete a draft or returned sheet |
+
+Rules:
+- Hours can change only while a sheet is draft or returned. Otherwise the API returns `409`.
+- Each task appears once per sheet, must belong to that resource, and must be active to be added. A line already on the sheet keeps working if its task is deactivated later.
+- Each day's hours are 0–24 per line, and the day's total across lines can't exceed 24.
+- Hours that are on an invoice (`billed: true`) can't be changed or removed, and their sheet can't be deleted.
+- Copy-previous skips tasks already on the week and tasks that are now inactive.
+
 ### Errors
 
 Errors look like `{ "error": { "message": "...", "details": ... } }`.
@@ -134,17 +174,18 @@ src/
 ├── crud.ts         Builds standard routes from a resource definition
 ├── resources.ts    Field rules for each standard resource
 └── routes/
-    └── extra.ts    Endpoints that don't fit the standard pattern
+    ├── extra.ts       Endpoints that don't fit the standard pattern
+    └── timesheets.ts  Weekly grid, status flow, copy-previous
 test/
-├── helpers.ts      Starts the app against the test database
-└── api.test.ts
+├── helpers.ts           Starts the app against the test database
+├── api.test.ts
+└── timesheets.test.ts
 ```
 
 To add a simple table, add a definition to `resources.ts`.
 
 ## Not built yet
 
-- **Timesheets:** weekly grid save, submit, approve and return
 - **Invoices:** generate from unbilled time, lines, payments, send and void
 - **Reports:** budgets, P&L and contractor 1099 totals
 - **Sign-in and permissions.** Right now anyone who can reach the API can change anything, so run it only on your own machine until sign-in is added.

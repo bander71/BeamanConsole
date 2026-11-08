@@ -4,6 +4,7 @@ import { pool } from './db.ts';
 import { errorHandler, HttpError } from './errors.ts';
 import { resourceDefs } from './resources.ts';
 import { extraRoutes } from './routes/extra.ts';
+import { timesheetRoutes } from './routes/timesheets.ts';
 
 export function createApp() {
   const app = express();
@@ -19,6 +20,7 @@ export function createApp() {
   });
 
   api.use(extraRoutes);
+  api.use(timesheetRoutes);
   for (const def of resourceDefs) api.use(def.path, crudRouter(def));
 
   api.use((req) => {
