@@ -4,6 +4,7 @@ import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router'
 import { api } from './api/client.ts'
 import { AccountsView } from './views/accounts/AccountsView.tsx'
 import { ApprovalsView } from './views/approvals/ApprovalsView.tsx'
+import { BudgetsView } from './views/budgets/BudgetsView.tsx'
 import { ContactsView } from './views/contacts/ContactsView.tsx'
 import { EmployeesView } from './views/employees/EmployeesView.tsx'
 import { MileageView } from './views/mileage/MileageView.tsx'
@@ -18,7 +19,7 @@ const NAV: { path: string; label: string; built?: boolean }[][] = [
   [
     { path: 'timesheet', label: 'Timesheet', built: true },
     { path: 'approvals', label: 'Approvals', built: true },
-    { path: 'budgets', label: 'Budgets' },
+    { path: 'budgets', label: 'Budgets', built: true },
     { path: 'mileage', label: 'Mileage', built: true },
   ],
   [
@@ -82,6 +83,7 @@ export function App() {
           <Route path="/" element={<Navigate to="/timesheet" replace />} />
           <Route path="/timesheet" element={<TimesheetView />} />
           <Route path="/approvals" element={<ApprovalsView />} />
+          <Route path="/budgets" element={<BudgetsView />} />
           <Route path="/mileage" element={<MileageView />} />
           <Route path="/pipeline" element={<PipelineView />} />
           <Route path="/pipeline/:id" element={<PipelineView />} />

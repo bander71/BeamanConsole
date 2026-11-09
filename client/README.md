@@ -37,7 +37,8 @@ Open http://localhost:5173. The dev server passes `/api` requests to the API on 
 | Employees | ✅ Edit-in-place employee table, and pipeline by sales rep (open deals and value, weighted, won this year) |
 | Contacts | ✅ List with search, "Show" filter (people, linked to a client, follow-ups, possible duplicates, relationship), source filter and five sorts including group by company; detail with linked account, follow-ups, emails and phones with Copy, notes and activity, opportunities, mileage trips with the person, and "People here" for company entries; add, edit and delete; CSV export. Typing a company name links the contact to the matching account (by name or alias), as the prototype does |
 | Accounts | ✅ List with search, type filter and sorting; detail with stats, follow-ups, notes and activity, people, opportunities and timesheet work; add, edit (renaming keeps the old name as an alias, like the prototype), delete; CSV export |
-| Budgets, Invoices, Accounting, Reports | Not rebuilt yet. Each shows a placeholder; use the prototype for now |
+| Budgets | ✅ Read-only budget vs actual hours for every project and its tasks: remaining hours (red when over), burn bar (amber past 80%, red past 100%), value, cost and margin. Flat Fee value is the fixed contract value, so overruns show as lower margin; internal projects show no money. Reloads each visit |
+| Invoices, Accounting, Reports | Not rebuilt yet. Each shows a placeholder; use the prototype for now |
 
 ### How the timesheet saves
 
@@ -61,6 +62,7 @@ src/
 │   ├── accounts/         Accounts screen: list, detail, form, data hooks
 │   ├── timesheet/        Timesheet screen: person and week picker, grid with autosave, hour cells
 │   ├── approvals/        Approvals screen
+│   ├── budgets/          Budgets screen (read-only)
 │   ├── contacts/         Contacts screen: list, detail, form, data hooks
 │   ├── mileage/          Mileage screen: trip form, totals, vehicles, trips list
 │   ├── pipeline/         Pipeline board and the opportunity panel
