@@ -1,0 +1,32 @@
+/* Invoice paper styles, copied unchanged from the prototype (IV_CSS). Also embedded in downloaded invoices. */
+.ivdoc{--iv-navy:#121a2b;--iv-cream:#f5f3ee;--iv-gold:#9c7a3c;--iv-dot:#e9a23b;--iv-ink:#141a26;--iv-mut:#6b6f76;--iv-rule:#d9d5cc;background:var(--iv-cream);color:var(--iv-ink);font-family:Montserrat,"Helvetica Neue",Arial,sans-serif;max-width:850px;width:100%;justify-self:center;box-shadow:0 4px 24px rgba(10,16,30,.12);display:flex;flex-direction:column;min-height:1100px}
+.ivdoc *{box-sizing:border-box}
+.iv-top{background:var(--iv-navy);padding:44px 76px 46px;display:flex;align-items:center;gap:28px;flex-wrap:nowrap}
+.iv-logo{font-weight:800;font-size:46px;line-height:1;color:#fff;letter-spacing:-.005em}.iv-logo i{color:var(--iv-dot);font-style:normal}
+.iv-sep{width:1px;height:42px;background:rgba(255,255,255,.22)}
+.iv-tag{font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace;letter-spacing:.26em;color:#8a94a6;font-size:20px;text-transform:uppercase;white-space:nowrap}
+.iv-body{padding:36px 76px 40px;flex:1}
+.iv-head{display:flex;justify-content:space-between;gap:20px;align-items:flex-start;flex-wrap:wrap}
+.iv-meta{font-size:16px;line-height:1.6;display:grid}
+.iv-title{font-weight:800;font-size:50px;line-height:1;color:var(--iv-navy);letter-spacing:.01em;margin-top:4px}
+.iv-parties{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:30px}
+.iv-lbl{color:var(--iv-gold);font-weight:700;font-size:13px;letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px}
+.iv-pname{font-weight:700;font-size:15px;margin-bottom:4px}
+.iv-small{color:var(--iv-mut);font-size:13px;line-height:1.75}
+.iv-scroll{overflow-x:auto;margin-top:22px}
+table.iv-t{width:100%;border-collapse:collapse;font-size:14px;min-width:560px}
+.iv-t th{background:var(--iv-navy);color:#fff;font-weight:700;font-size:13px;letter-spacing:.05em;text-transform:uppercase;padding:13px 18px;text-align:left}
+.iv-t td{padding:9px 18px;border-bottom:1px solid var(--iv-rule);vertical-align:middle;font-variant-numeric:tabular-nums}
+.iv-t .c{text-align:center}.iv-t .r{text-align:right}
+.iv-t tr.iv-sum td{border-bottom:0;color:var(--iv-mut);padding:5px 18px}
+.iv-t tr.iv-sum.first td{padding-top:14px}
+.iv-t tr.iv-total td{border-bottom:0;border-top:2px solid var(--iv-gold);font-weight:700;font-size:18px;padding-top:16px;color:var(--iv-ink)}
+.iv-notes{margin-top:30px}.iv-notes p{color:var(--iv-mut);font-size:13px;line-height:1.65;margin:4px 0;white-space:pre-wrap}
+.iv-foot{background:var(--iv-navy);color:#fff;text-align:center;padding:26px 20px;font-size:15px;letter-spacing:.02em;margin-top:auto}
+.iv-in{font:inherit;color:inherit;background:rgba(255,255,255,.6);border:1px dashed var(--iv-rule);border-radius:3px;padding:1px 5px;width:100%;min-width:0}
+.iv-in:focus{outline:2px solid var(--iv-gold);outline-offset:0;background:#fff}
+.iv-meta .iv-in{width:auto}
+.iv-x{background:none;border:0;color:var(--iv-mut);cursor:pointer;font:inherit;padding:2px 6px}
+.iv-tax{font-size:11px;color:var(--iv-mut);display:inline-flex;gap:4px;align-items:center;margin-left:8px;white-space:nowrap}
+.iv-detail{padding:36px 76px}
+@media (max-width:700px){.iv-top{padding:24px;gap:16px;flex-wrap:wrap}.iv-logo{font-size:30px}.iv-tag{font-size:12px;letter-spacing:.22em}.iv-sep{height:28px}.iv-body,.iv-detail{padding:24px 20px}.iv-title{font-size:34px}.iv-parties{grid-template-columns:1fr}.ivdoc{min-height:0}}

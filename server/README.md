@@ -279,6 +279,5 @@ To add a simple table, add a definition to `resources.ts`.
 
 ## Not built yet
 
-- **Invoice files:** the printable invoice and the time-detail CSV. The prototype builds these in the browser, so they may belong in the React app.
 - **CSV exports:** the prototype's CSV downloads (time entries, ledger, accounts, trips). The report endpoints return the same data as JSON, so the React app can build the files.
 - **Sign-in and permissions.** Right now anyone who can reach the API can change anything, so run it only on your own machine until sign-in is added.

@@ -7,6 +7,7 @@ import { ApprovalsView } from './views/approvals/ApprovalsView.tsx'
 import { BudgetsView } from './views/budgets/BudgetsView.tsx'
 import { ContactsView } from './views/contacts/ContactsView.tsx'
 import { EmployeesView } from './views/employees/EmployeesView.tsx'
+import { InvoicesView } from './views/invoices/InvoicesView.tsx'
 import { MileageView } from './views/mileage/MileageView.tsx'
 import { NotBuiltYet } from './views/NotBuiltYet.tsx'
 import { PipelineView } from './views/pipeline/PipelineView.tsx'
@@ -28,7 +29,7 @@ const NAV: { path: string; label: string; built?: boolean }[][] = [
     { path: 'contacts', label: 'Contacts', built: true },
   ],
   [
-    { path: 'invoices', label: 'Invoices' },
+    { path: 'invoices', label: 'Invoices', built: true },
     { path: 'accounting', label: 'Accounting' },
     { path: 'reports', label: 'Reports' },
   ],
@@ -87,6 +88,8 @@ export function App() {
           <Route path="/mileage" element={<MileageView />} />
           <Route path="/pipeline" element={<PipelineView />} />
           <Route path="/pipeline/:id" element={<PipelineView />} />
+          <Route path="/invoices" element={<InvoicesView />} />
+          <Route path="/invoices/:id" element={<InvoicesView />} />
           <Route path="/employees" element={<EmployeesView />} />
           <Route path="/setup" element={<SetupView />} />
           <Route path="/accounts" element={<AccountsView />} />
