@@ -3,6 +3,7 @@ import { Fragment } from 'react'
 import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router'
 import { api } from './api/client.ts'
 import { AccountsView } from './views/accounts/AccountsView.tsx'
+import { ApprovalsView } from './views/approvals/ApprovalsView.tsx'
 import { NotBuiltYet } from './views/NotBuiltYet.tsx'
 import { useSubmittedCount } from './views/timesheet/data.ts'
 import { TimesheetView } from './views/timesheet/TimesheetView.tsx'
@@ -11,7 +12,7 @@ import { TimesheetView } from './views/timesheet/TimesheetView.tsx'
 const NAV: { path: string; label: string; built?: boolean }[][] = [
   [
     { path: 'timesheet', label: 'Timesheet', built: true },
-    { path: 'approvals', label: 'Approvals' },
+    { path: 'approvals', label: 'Approvals', built: true },
     { path: 'budgets', label: 'Budgets' },
     { path: 'mileage', label: 'Mileage' },
   ],
@@ -75,6 +76,7 @@ export function App() {
         <Routes>
           <Route path="/" element={<Navigate to="/timesheet" replace />} />
           <Route path="/timesheet" element={<TimesheetView />} />
+          <Route path="/approvals" element={<ApprovalsView />} />
           <Route path="/accounts" element={<AccountsView />} />
           <Route path="/accounts/:id" element={<AccountsView />} />
           {NAV.flat()

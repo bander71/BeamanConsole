@@ -202,7 +202,8 @@ timesheetRoutes.get('/timesheets', async (req, res) => {
     `SELECT ts.*, r.name AS resource_name,
             coalesce(sum(te.hours), 0) AS total_hours,
             coalesce(sum(te.hours) FILTER (WHERE t.bill_rate > 0), 0) AS billable_hours,
-            coalesce(sum(te.hours * t.bill_rate), 0) AS bill_value
+            coalesce(sum(te.hours * t.bill_rate), 0) AS bill_value,
+            coalesce(sum(te.hours * t.cost_rate), 0) AS cost
      FROM timesheets ts
      JOIN resources r ON r.id = ts.resource_id
      LEFT JOIN timesheet_lines tl ON tl.timesheet_id = ts.id

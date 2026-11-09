@@ -146,6 +146,22 @@ export interface Timesheet {
   totals: { hours: number; billableHours: number; billValue: number; cost: number; days: number[] }
 }
 
+/** One row of GET /timesheets (no lines, with totals). */
+export interface TimesheetSummary {
+  id: string
+  resourceId: string
+  resourceName: string
+  weekStart: string
+  status: TimesheetStatus
+  submittedAt: string | null
+  approvedAt: string | null
+  returnNote: string
+  totalHours: number
+  billableHours: number
+  billValue: number
+  cost: number
+}
+
 export interface Trip {
   id: string
   tripDate: string

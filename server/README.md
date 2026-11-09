@@ -135,7 +135,7 @@ A timesheet is one resource's week, starting on a Monday. The API sends and rece
 | `GET /resources/:resourceId/timesheets/:weekStart` | The sheet for that week, or an empty draft (`id: null`) if none is saved |
 | `PUT /resources/:resourceId/timesheets/:weekStart` | Save the grid: `{ "lines": [{ "taskId", "note", "hours": [7 numbers] }] }`. Replaces all lines, in the order sent, and creates the sheet if needed |
 | `POST /resources/:resourceId/timesheets/:weekStart/copy-previous` | Add the task lines from the most recent earlier sheet, with zero hours |
-| `GET /timesheets?resourceId=&status=&from=&to=` | List sheets with total, billable hours and value. `status=submitted` is the approvals queue |
+| `GET /timesheets?resourceId=&status=&from=&to=` | List sheets with total hours, billable hours, billing value and cost. `status=submitted` is the approvals queue |
 | `GET /timesheets/:id` | One sheet as a grid |
 | `POST /timesheets/:id/submit` | Draft or returned → submitted (needs some hours) |
 | `POST /timesheets/:id/recall` | Submitted → draft |

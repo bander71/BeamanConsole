@@ -200,6 +200,7 @@ describe('approvals list', () => {
     assert.equal(queue.body.data[0].totalHours, 17);
     assert.equal(queue.body.data[0].billableHours, 16);
     assert.equal(queue.body.data[0].billValue, 2400);
+    assert.equal(queue.body.data[0].cost, 1440, '16h x $90 cost rate');
 
     assert.equal((await api('GET', `/timesheets?resourceId=${dev.id}&from=${WEEK}`)).body.total, 1);
     assert.equal((await api('GET', '/timesheets?status=pending')).status, 400);
