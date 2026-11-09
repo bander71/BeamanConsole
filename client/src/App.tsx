@@ -5,6 +5,7 @@ import { api } from './api/client.ts'
 import { AccountsView } from './views/accounts/AccountsView.tsx'
 import { ApprovalsView } from './views/approvals/ApprovalsView.tsx'
 import { ContactsView } from './views/contacts/ContactsView.tsx'
+import { MileageView } from './views/mileage/MileageView.tsx'
 import { NotBuiltYet } from './views/NotBuiltYet.tsx'
 import { useSubmittedCount } from './views/timesheet/data.ts'
 import { TimesheetView } from './views/timesheet/TimesheetView.tsx'
@@ -15,7 +16,7 @@ const NAV: { path: string; label: string; built?: boolean }[][] = [
     { path: 'timesheet', label: 'Timesheet', built: true },
     { path: 'approvals', label: 'Approvals', built: true },
     { path: 'budgets', label: 'Budgets' },
-    { path: 'mileage', label: 'Mileage' },
+    { path: 'mileage', label: 'Mileage', built: true },
   ],
   [
     { path: 'pipeline', label: 'Pipeline' },
@@ -78,6 +79,7 @@ export function App() {
           <Route path="/" element={<Navigate to="/timesheet" replace />} />
           <Route path="/timesheet" element={<TimesheetView />} />
           <Route path="/approvals" element={<ApprovalsView />} />
+          <Route path="/mileage" element={<MileageView />} />
           <Route path="/accounts" element={<AccountsView />} />
           <Route path="/accounts/:id" element={<AccountsView />} />
           <Route path="/contacts" element={<ContactsView />} />

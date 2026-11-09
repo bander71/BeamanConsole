@@ -193,12 +193,39 @@ export interface TimesheetSummary {
   cost: number
 }
 
+export type TripKind = 'business' | 'charitable'
+
 export interface Trip {
   id: string
   tripDate: string
-  kind: 'business' | 'charitable'
+  kind: TripKind
   resourceId: string | null
+  vehicleId: string | null
+  accountId: string | null
+  clientName: string
+  contactId: string | null
+  contactName: string
+  purpose: string
+  route: string
+  odometerStart: number | null
+  odometerEnd: number | null
   miles: number
+  createdAt: string
+}
+
+export type TripInput = Partial<Omit<Trip, 'id' | 'createdAt'>>
+
+export interface Vehicle {
+  id: string
+  name: string
+  startOdometer: number | null
+  active: boolean
+}
+
+export interface MileageRate {
+  effectiveDate: string
+  kind: TripKind
+  ratePerMile: number
 }
 
 export interface Opportunity {

@@ -27,6 +27,11 @@ export const parseHours = (raw: string) => {
 /** 1,234.5 (miles) */
 export const fmi = (n: number | null | undefined) =>
   (Number(n) || 0).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
+/** $0.725 per mile (trailing zero dropped: $0.70) */
+export const frate = (n: number | null | undefined) => '$' + (Number(n) || 0).toFixed(3).replace(/0$/, '')
+/** 95,842.2 (odometer), or — when missing */
+export const odo = (n: number | null | undefined) =>
+  n == null ? '—' : Number(n).toLocaleString('en-US', { maximumFractionDigits: 1 })
 /** 75% */
 export const pct = (n: number | null | undefined) => (n == null || !Number.isFinite(n) ? '—' : Math.round(n * 100) + '%')
 
