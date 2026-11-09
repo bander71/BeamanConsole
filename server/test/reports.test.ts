@@ -219,6 +219,15 @@ describe('invoicing summary', () => {
   });
 });
 
+describe('invoice payments', () => {
+  test('lists payments with invoice and client, filtered by date', async () => {
+    const all = (await api('GET', '/invoice-payments')).body.data;
+    assert.equal(all.length, 1);
+    assert.deepEqual([all[0].invoiceNumber, all[0].accountName, all[0].paymentDate, all[0].amount], [invA.number, 'Acme', '2026-11-05', 1000]);
+    assert.equal((await api('GET', '/invoice-payments?from=2026-11-06')).body.data.length, 0);
+  });
+});
+
 describe('accounts', () => {
   test('people, hours, billing, miles and last activity per account', async () => {
     await create('/contacts', { name: 'Ann', accountId: acme.id });

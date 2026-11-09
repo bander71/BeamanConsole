@@ -39,7 +39,8 @@ Open http://localhost:5173. The dev server passes `/api` requests to the API on 
 | Accounts | ✅ List with search, type filter and sorting; detail with stats, follow-ups, notes and activity, people, opportunities and timesheet work; add, edit (renaming keeps the old name as an alias, like the prototype), delete; CSV export |
 | Budgets | ✅ Read-only budget vs actual hours for every project and its tasks: remaining hours (red when over), burn bar (amber past 80%, red past 100%), value, cost and margin. Flat Fee value is the fixed contract value, so overruns show as lower margin; internal projects show no money. Reloads each visit |
 | Invoices | ✅ Stats (outstanding, overdue, unbilled T&M time, invoiced and collected this year); invoice settings (tax rate entered as a percent); Ready to invoice by client, split at the end of the last full bi-weekly period, with "Invoice through" and "Ad hoc" buttons; New invoice panel with client, bi-weekly period or date range, unapproved and Flat Fee options and a preview of the lines; list with status and client filters and CSV export. Invoice page: the printable invoice, editable while a draft (number, date, terms, bill-to, lines, taxable flags, notes, sales tax), with add line, milestone, product (taxable) and expense; save, mark as sent, back to draft, void and delete with confirmation; record and remove payments; payments and time detail tables; Download invoice (an HTML file to print or save as PDF, with the time detail on page 2) and Time detail (CSV) |
-| Accounting, Reports | Not rebuilt yet. Each shows a placeholder; use the prototype for now |
+| Accounting | ✅ Period (this month to all time, or custom) and cash or accrual basis. Stats (revenue, expenses, net income and margin, receivables, owed to contractors); profit and loss with the mileage deduction alongside; revenue and expenses by month with bars; receivables aging by client; contractors with hours, cost, payments, what's owed, a Pay button and the 1099-NEC flag; the ledger of invoice payments (added automatically; click to open the invoice) and manual income and expenses (click to edit or delete); record income or expense; ledger CSV export |
+| Reports | ✅ Period and group by client, project, resource or task. Stats (hours, billable hours, utilization, billing value, contractor cost, margin), the grouped table with totals, and the newest 300 day-lines with timesheet status. Export entries (CSV) includes every day-line in the period |
 
 ### How the timesheet saves
 
@@ -63,6 +64,7 @@ src/
 │   ├── accounts/         Accounts screen: list, detail, form, data hooks
 │   ├── timesheet/        Timesheet screen: person and week picker, grid with autosave, hour cells
 │   ├── approvals/        Approvals screen
+│   ├── accounting/       Accounting: profit and loss, by month, receivables aging, contractors, ledger and entry form
 │   ├── budgets/          Budgets screen (read-only)
 │   ├── invoices/         Invoices: list and new-invoice panel, invoice page, the invoice paper and its styles, downloads
 │   ├── contacts/         Contacts screen: list, detail, form, data hooks
@@ -70,6 +72,7 @@ src/
 │   ├── pipeline/         Pipeline board and the opportunity panel
 │   ├── setup/            Setup tables: tasks, projects, resources, vehicles, mileage rates
 │   ├── employees/        Employees table and pipeline by sales rep
+│   ├── reports/          Time report by client, project, resource or task, and its CSV
 │   └── NotBuiltYet.tsx   Placeholder for screens still to rebuild
 └── styles/console.css    The prototype's stylesheet
 ```

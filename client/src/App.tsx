@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Fragment } from 'react'
 import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router'
 import { api } from './api/client.ts'
+import { AccountingView } from './views/accounting/AccountingView.tsx'
 import { AccountsView } from './views/accounts/AccountsView.tsx'
 import { ApprovalsView } from './views/approvals/ApprovalsView.tsx'
 import { BudgetsView } from './views/budgets/BudgetsView.tsx'
@@ -11,6 +12,7 @@ import { InvoicesView } from './views/invoices/InvoicesView.tsx'
 import { MileageView } from './views/mileage/MileageView.tsx'
 import { NotBuiltYet } from './views/NotBuiltYet.tsx'
 import { PipelineView } from './views/pipeline/PipelineView.tsx'
+import { ReportsView } from './views/reports/ReportsView.tsx'
 import { SetupView } from './views/setup/SetupView.tsx'
 import { useSubmittedCount } from './views/timesheet/data.ts'
 import { TimesheetView } from './views/timesheet/TimesheetView.tsx'
@@ -30,8 +32,8 @@ const NAV: { path: string; label: string; built?: boolean }[][] = [
   ],
   [
     { path: 'invoices', label: 'Invoices', built: true },
-    { path: 'accounting', label: 'Accounting' },
-    { path: 'reports', label: 'Reports' },
+    { path: 'accounting', label: 'Accounting', built: true },
+    { path: 'reports', label: 'Reports', built: true },
   ],
   [
     { path: 'employees', label: 'Employees', built: true },
@@ -90,6 +92,8 @@ export function App() {
           <Route path="/pipeline/:id" element={<PipelineView />} />
           <Route path="/invoices" element={<InvoicesView />} />
           <Route path="/invoices/:id" element={<InvoicesView />} />
+          <Route path="/accounting" element={<AccountingView />} />
+          <Route path="/reports" element={<ReportsView />} />
           <Route path="/employees" element={<EmployeesView />} />
           <Route path="/setup" element={<SetupView />} />
           <Route path="/accounts" element={<AccountsView />} />

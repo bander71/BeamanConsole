@@ -562,3 +562,20 @@ invoiceRoutes.delete('/invoices/:id/payments/:paymentId', async (req, res) => {
   });
   res.json({ data: await requireInvoice(pool, id) });
 });
+
+// GET /invoice-payments?from=&to=
+// Every payment received, newest first, with its invoice and client (the Accounting ledger).
+const paymentsQuery = z.object({ from: z.iso.date().optional(), to: z.iso.date().optional() });
+
+invoiceRoutes.get('/invoice-payments', async (req, res) => {
+  const { from, to } = paymentsQuery.parse(req.query);
+  const { rows } = await pool.query(
+    `SELECT pm.id, pm.invoice_id, i.number AS invoice_number, i.account_id, a.name AS account_name,
+            pm.payment_date, pm.amount, pm.method, pm.reference
+     FROM invoice_payments pm JOIN invoices i ON i.id = pm.invoice_id JOIN accounts a ON a.id = i.account_id
+     WHERE ($1::date IS NULL OR pm.payment_date >= $1) AND ($2::date IS NULL OR pm.payment_date <= $2)
+     ORDER BY pm.payment_date DESC, pm.created_at DESC`,
+    [from ?? null, to ?? null],
+  );
+  res.json({ data: rows.map(camelRow) });
+});

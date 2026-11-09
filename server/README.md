@@ -106,6 +106,7 @@ The field rules for each resource are in [`src/resources.ts`](src/resources.ts).
 | `PUT /opportunities/:id/contacts` | Replace them: `{ "contactIds": [...] }` |
 | `GET /opportunity-contacts` | Every opportunity–contact link, as `{ opportunityId, contactId }` (for the pipeline board) |
 | `POST /opportunities/:id/convert` | Turn an opportunity into a project: `{ code, name, type?, startDate? }`. Creates the project for the opportunity's account with the opportunity's value as the contract value, links it, and marks the opportunity Won, all in one transaction. `409` if it already has a project or the code is taken |
+| `GET /invoice-payments?from=&to=` | Every invoice payment, newest first, with its invoice number and client (for the Accounting ledger) |
 | `GET /mileage-rates` | All mileage rates |
 | `GET /mileage-rates/lookup?date=&kind=` | The rate in effect on a date (`kind` is `business` or `charitable`) |
 | `PUT /mileage-rates/:kind/:effectiveDate` | Set a rate: `{ "ratePerMile": 0.70 }` |
@@ -279,5 +280,4 @@ To add a simple table, add a definition to `resources.ts`.
 
 ## Not built yet
 
-- **CSV exports:** the prototype's CSV downloads (time entries, ledger, accounts, trips). The report endpoints return the same data as JSON, so the React app can build the files.
 - **Sign-in and permissions.** Right now anyone who can reach the API can change anything, so run it only on your own machine until sign-in is added.

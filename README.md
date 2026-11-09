@@ -29,7 +29,7 @@ beaman-console/
 
 1. **Data model.** ✅ Postgres schema in [`db/`](db/README.md), built from the prototype's data.
 2. **API.** ✅ [`server/`](server/README.md) has endpoints for every area of the prototype: accounts, contacts, opportunities, people, projects, tasks, timesheets, invoices, mileage, the ledger and reports.
-3. **Frontend.** 🚧 [`client/`](client/README.md) has the app shell, navigation, and the Timesheet, Approvals, Budgets, Mileage, Invoices, Pipeline, Accounts, Contacts, Employees and Setup screens. Still to rebuild: Accounting and Reports.
+3. **Frontend.** ✅ [`client/`](client/README.md) has every screen from the prototype: Timesheet, Approvals, Budgets, Mileage, Pipeline, Accounts, Contacts, Invoices, Accounting, Reports, Employees and Setup.
 4. **Migration.** Write a one-time import of existing `localStorage` data into Postgres.
 5. **Sign-in and roles.** Replace the prototype's editor/viewer checks with real authentication.
 
