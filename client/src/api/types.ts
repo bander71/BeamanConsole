@@ -117,6 +117,11 @@ export interface Resource {
   id: string
   name: string
   email: string
+  phone: string
+  address: string
+  city: string
+  state: string
+  zip: string
   contractor: boolean
   active: boolean
 }
@@ -127,6 +132,9 @@ export interface Project {
   name: string
   type: 'T&M' | 'Flat Fee'
   accountId: string | null
+  contractValue: number | null
+  startDate: string | null
+  endDate: string | null
 }
 
 export interface Task {
