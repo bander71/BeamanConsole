@@ -60,15 +60,46 @@ export interface AccountSummary extends AccountStats {
   }[]
 }
 
+export const RELATIONSHIPS = ['Client', 'Prospect', 'Partner', 'Vendor', 'Network', 'Fight Club', 'Personal'] as const
+
 export interface Contact {
   id: string
   accountId: string | null
+  kind: string // 'person' or 'company'
   name: string
   firstName: string
   lastName: string
+  nickname: string
   title: string
   company: string
   emails: string[]
+  mobile: string
+  businessPhone: string
+  homePhone: string
+  otherPhone: string
+  businessAddress: string
+  homeAddress: string
+  website: string
+  birthday: string
+  category: string
+  relationship: string
+  tags: string[]
+  keywords: string
+  notes: string
+  source: string
+  followUp: string | null
+  dateAdded: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export type ContactInput = Partial<Omit<Contact, 'id' | 'createdAt' | 'updatedAt'>>
+
+export interface ContactSummary {
+  contactId: string
+  lastActivity: string | null
+  trips: { id: string; tripDate: string; kind: string; purpose: string; miles: number; clientName: string; contactName: string }[]
+  opportunities: { id: string; name: string; stage: Stage; value: number; targetClose: string | null; accountId: string | null }[]
 }
 
 export interface Activity {

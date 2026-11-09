@@ -27,6 +27,8 @@ export function AccountForm({ account, accounts, onDone }: {
   async function save() {
     const name = v.name.trim()
     if (!name) return toast('Enter the account name.')
+    const email = v.billingEmail.trim()
+    if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return toast(`“${email}” doesn't look like an email address.`)
 
     // Same name matching as the prototype: names and aliases must point to one account.
     const clash = accounts.find((a) => a.id !== account?.id && [a.name, ...a.aliases].some((n) => norm(n) === norm(name)))
@@ -76,7 +78,7 @@ export function AccountForm({ account, accounts, onDone }: {
         <label className="lbl">Keywords<input className="field" {...bind('keywords')} /></label>
         <label className="lbl">Category<input className="field" {...bind('category')} /></label>
         <label className="lbl">Billing contact (Attn)<input className="field" placeholder="Accounts Payable" {...bind('billingAttn')} /></label>
-        <label className="lbl">Billing email<input className="field" type="email" {...bind('billingEmail')} /></label>
+        <label className="lbl">Billing email<input className="field" inputMode="email" {...bind('billingEmail')} /></label>
         <label className="lbl full">Other names that should link here (comma separated)
           <input className="field" value={aliases} onChange={(e) => setAliases(e.target.value)} placeholder="McElroys, McElroys IT" />
         </label>

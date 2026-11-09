@@ -1,37 +1,14 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
-import { ACTIVITY_TYPES, type Account, type ActivityType, type Stage } from '../../api/types.ts'
+import type { Account } from '../../api/types.ts'
+import { ActivityLog } from '../../components/ActivityLog.tsx'
+import { Field } from '../../components/Field.tsx'
+import { FollowUp } from '../../components/FollowUp.tsx'
 import { useToast } from '../../components/toast-context.ts'
-import { addDays, fh2, fm, fmi, initials, md, parse, shortDate, today } from '../../lib/format.ts'
+import { fh2, fm, fmi, initials, parse, shortDate } from '../../lib/format.ts'
+import { stageClass } from '../../lib/stages.ts'
 import { AccountForm } from './AccountForm.tsx'
-import {
-  useAccountActivities, useAccountContacts, useAccountMutations, useAccountOpportunities, useAccountSummary, useActivityMutations,
-} from './data.ts'
-
-const stageClass = (s: Stage) =>
-  s === 'Won' ? 'st-approved' : s === 'Lost' ? 'st-returned' : s === 'Verbally Committed' || s === 'Proposal Sent' ? 'st-submitted' : 'st-draft'
-
-function Field({ label, value, copy }: { label: string; value: string | null | undefined; copy?: boolean }) {
-  const toast = useToast()
-  if (!value) return null
-  return (
-    <div className="kv">
-      <span className="k">{label}</span>
-      <span className="v">
-        {value}
-        {copy && (
-          <>
-            {' '}
-            <button className="btn quiet sm" aria-label={`Copy ${label}`}
-              onClick={() => navigator.clipboard.writeText(value).then(() => toast('Copied'), () => toast("Couldn't copy"))}>
-              Copy
-            </button>
-          </>
-        )}
-      </span>
-    </div>
-  )
-}
+import { useAccountContacts, useAccountMutations, useAccountOpportunities, useAccountSummary } from './data.ts'
 
 export function AccountDetail({ account: a, accounts }: { account: Account; accounts: Account[] }) {
   const toast = useToast()
@@ -40,16 +17,9 @@ export function AccountDetail({ account: a, accounts }: { account: Account; acco
   const [confirmDelete, setConfirmDelete] = useState(false)
   const summary = useAccountSummary(a.id).data
   const people = useAccountContacts(a.id).data ?? []
-  const activities = useAccountActivities(a.id).data ?? []
   const opps = useAccountOpportunities(a.id).data ?? []
   const { update, remove } = useAccountMutations()
-  const log = useActivityMutations(a.id)
-
-  const [td] = useState(today)
   const year = summary?.year
-  const [noteDate, setNoteDate] = useState(td)
-  const [noteType, setNoteType] = useState<ActivityType>('Note')
-  const [noteText, setNoteText] = useState('')
 
   if (editing) return <AccountForm account={a} accounts={accounts} onDone={() => setEditing(false)} />
 
@@ -59,26 +29,12 @@ export function AccountDetail({ account: a, accounts }: { account: Account; acco
       onError: (e) => toast("Couldn't save. " + e.message),
     })
 
-  const addNote = () => {
-    const body = noteText.trim()
-    if (!body) return toast('Write the note first.')
-    log.add.mutate({ activityDate: noteDate || td, type: noteType, body }, {
-      onSuccess: () => { setNoteText(''); toast('Note added') },
-      onError: (e) => toast("Couldn't add the note. " + e.message),
-    })
-  }
-
   const doDelete = () =>
     remove.mutate(a.id, {
       onSuccess: () => { toast('Account deleted'); navigate('/accounts') },
       onError: (e) => { setConfirmDelete(false); toast("Couldn't delete the account. " + e.message) },
     })
 
-  const followUpLabel = a.followUp
-    ? parse(a.followUp).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }) +
-      (a.followUp < td ? ' · overdue' : a.followUp === td ? ' · today' : '')
-    : 'None set'
-  const sortedLog = [...activities].sort((x, y) => y.activityDate.localeCompare(x.activityDate) || y.createdAt.localeCompare(x.createdAt))
   const sortedPeople = [...people].sort((x, y) => (x.name || x.lastName).localeCompare(y.name || y.lastName))
   const personName = (p: (typeof people)[number]) => p.name || [p.firstName, p.lastName].filter(Boolean).join(' ') || '(no name)'
 
@@ -119,17 +75,7 @@ export function AccountDetail({ account: a, accounts }: { account: Account; acco
       </div>
 
       <div className="cbody">
-        <div className={'followup' + (a.followUp && a.followUp <= td ? ' due' : '')}>
-          <div><span className="k">Next follow-up</span><b>{followUpLabel}</b></div>
-          <div className="row" style={{ gap: 6 }}>
-            <button className="btn sm" onClick={() => setFollowUp(addDays(td, 7))}>In 1 week</button>
-            <button className="btn sm" onClick={() => setFollowUp(addDays(td, 30))}>In 1 month</button>
-            <button className="btn sm" onClick={() => setFollowUp(addDays(td, 90))}>In 3 months</button>
-            <input type="date" className="field" value={a.followUp ?? ''} aria-label="Follow-up date" style={{ padding: '3px 6px' }}
-              onChange={(e) => e.target.value && setFollowUp(e.target.value)} />
-            {a.followUp && <button className="btn quiet sm" onClick={() => setFollowUp(null)}>Clear</button>}
-          </div>
-        </div>
+        <FollowUp value={a.followUp} onChange={setFollowUp} />
 
         <div className="cgrid">
           <div>
@@ -166,7 +112,7 @@ export function AccountDetail({ account: a, accounts }: { account: Account; acco
             <ul className="tl">
               {sortedPeople.length ? sortedPeople.map((p) => (
                 <li key={p.id}>
-                  <span>{personName(p)}</span>
+                  <button className="btn quiet sm" onClick={() => navigate('/contacts/' + p.id)}>{personName(p)}</button>
                   <span className="note">{[p.title, p.company !== a.name ? p.company : ''].filter(Boolean).join(' · ')}</span>
                 </li>
               )) : <li className="note">No contacts are linked to this account yet.</li>}
@@ -174,27 +120,7 @@ export function AccountDetail({ account: a, accounts }: { account: Account; acco
           </div>
 
           <div>
-            <h3 className="h3">Notes &amp; activity</h3>
-            <form className="logform" onSubmit={(e) => { e.preventDefault(); addNote() }}>
-              <input type="date" className="field" value={noteDate} onChange={(e) => setNoteDate(e.target.value)} aria-label="Date" />
-              <select value={noteType} onChange={(e) => setNoteType(e.target.value as ActivityType)} aria-label="Type">
-                {ACTIVITY_TYPES.map((t) => <option key={t}>{t}</option>)}
-              </select>
-              <input className="field" value={noteText} onChange={(e) => setNoteText(e.target.value)}
-                placeholder="Meeting notes, proposal sent, renewal…" aria-label="Activity note" />
-              <button className="btn primary sm" disabled={log.add.isPending}>Add</button>
-            </form>
-            <ul className="tl">
-              {sortedLog.length ? sortedLog.map((x) => (
-                <li key={x.id}>
-                  <span className="num">{md(x.activityDate)}/{x.activityDate.slice(2, 4)}</span>
-                  <span className="chip">{x.type}</span>
-                  <span>{x.body}</span>
-                  <button className="btn quiet sm" aria-label="Remove entry"
-                    onClick={() => log.remove.mutate(x.id, { onSuccess: () => toast('Entry removed') })}>✕</button>
-                </li>
-              )) : <li className="note">No activity logged yet.</li>}
-            </ul>
+            <ActivityLog parent={{ accountId: a.id }} placeholder="Meeting notes, proposal sent, renewal…" />
 
             {summary && summary.tasks.length > 0 && (
               <>

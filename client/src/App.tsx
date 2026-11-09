@@ -4,6 +4,7 @@ import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router'
 import { api } from './api/client.ts'
 import { AccountsView } from './views/accounts/AccountsView.tsx'
 import { ApprovalsView } from './views/approvals/ApprovalsView.tsx'
+import { ContactsView } from './views/contacts/ContactsView.tsx'
 import { NotBuiltYet } from './views/NotBuiltYet.tsx'
 import { useSubmittedCount } from './views/timesheet/data.ts'
 import { TimesheetView } from './views/timesheet/TimesheetView.tsx'
@@ -19,7 +20,7 @@ const NAV: { path: string; label: string; built?: boolean }[][] = [
   [
     { path: 'pipeline', label: 'Pipeline' },
     { path: 'accounts', label: 'Accounts', built: true },
-    { path: 'contacts', label: 'Contacts' },
+    { path: 'contacts', label: 'Contacts', built: true },
   ],
   [
     { path: 'invoices', label: 'Invoices' },
@@ -79,6 +80,8 @@ export function App() {
           <Route path="/approvals" element={<ApprovalsView />} />
           <Route path="/accounts" element={<AccountsView />} />
           <Route path="/accounts/:id" element={<AccountsView />} />
+          <Route path="/contacts" element={<ContactsView />} />
+          <Route path="/contacts/:id" element={<ContactsView />} />
           {NAV.flat()
             .filter((v) => !v.built)
             .map((v) => (

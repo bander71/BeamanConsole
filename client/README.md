@@ -31,8 +31,9 @@ Open http://localhost:5173. The dev server passes `/api` requests to the API on 
 |---|---|
 | Timesheet | ✅ Weekly grid for any resource and week, saved as you type. Hours take decimals (1.5) or h:mm (1:30); invalid entries are flagged and not saved. Up, Down and Enter move between rows. Add and remove lines, notes per line, copy lines from last week, daily and weekly totals, and submit, approve, return (with a note), recall and reopen. Hours already on an invoice show as locked cells. The Approvals tab shows how many sheets are waiting |
 | Approvals | ✅ Timesheets waiting for approval with hours, billable hours, billing value and cost; approve, or return with a note; Open jumps to the sheet. "Show every timesheet" lists all sheets with their status (and the reason for any returned sheet), and the choice is remembered |
+| Contacts | ✅ List with search, "Show" filter (people, linked to a client, follow-ups, possible duplicates, relationship), source filter and five sorts including group by company; detail with linked account, follow-ups, emails and phones with Copy, notes and activity, opportunities, mileage trips with the person, and "People here" for company entries; add, edit and delete; CSV export. Typing a company name links the contact to the matching account (by name or alias), as the prototype does |
 | Accounts | ✅ List with search, type filter and sorting; detail with stats, follow-ups, notes and activity, people, opportunities and timesheet work; add, edit (renaming keeps the old name as an alias, like the prototype), delete; CSV export |
-| Budgets, Mileage, Pipeline, Contacts, Invoices, Accounting, Reports, Employees, Setup | Not rebuilt yet. Each shows a placeholder; use the prototype for now |
+| Budgets, Mileage, Pipeline, Invoices, Accounting, Reports, Employees, Setup | Not rebuilt yet. Each shows a placeholder; use the prototype for now |
 
 ### How the timesheet saves
 
@@ -50,11 +51,12 @@ src/
 ├── lib/
 │   ├── format.ts         Money, hours, miles and date formatting (matches the prototype)
 │   └── csv.ts            CSV download
-├── components/           Shared pieces (toast messages)
+├── components/           Shared pieces: toast messages, detail-panel fields, follow-up box, notes and activity log
 ├── views/
 │   ├── accounts/         Accounts screen: list, detail, form, data hooks
 │   ├── timesheet/        Timesheet screen: person and week picker, grid with autosave, hour cells
 │   ├── approvals/        Approvals screen
+│   ├── contacts/         Contacts screen: list, detail, form, data hooks
 │   └── NotBuiltYet.tsx   Placeholder for screens still to rebuild
 └── styles/console.css    The prototype's stylesheet
 ```

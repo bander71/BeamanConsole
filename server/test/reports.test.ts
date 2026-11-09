@@ -243,6 +243,31 @@ describe('accounts', () => {
   });
 });
 
+describe('contacts', () => {
+  test('last contacted, trips and opportunities per contact', async () => {
+    const dan = await create('/contacts', { kind: 'person', name: 'Dan Beal', firstName: 'Dan', lastName: 'Beal', accountId: acme.id });
+    const ann = await create('/contacts', { kind: 'person', name: 'Ann', firstName: 'Ann' });
+    const co = await create('/contacts', { kind: 'company', name: 'Fight Club' });
+    await create('/trips', { tripDate: '2026-11-06', kind: 'business', miles: 12, contactName: 'Met with Dan Beal and team', purpose: 'Status' });
+    await create('/trips', { tripDate: '2026-10-01', kind: 'charitable', miles: 8, purpose: 'Fight Club volunteering' });
+    await create('/trips', { tripDate: '2026-09-01', kind: 'business', miles: 5, contactName: 'Ann' });
+    await create('/activities', { contactId: dan.id, activityDate: '2026-11-01', type: 'Call', body: 'Intro' });
+    await create('/activities', { contactId: ann.id, activityDate: '2026-08-15', body: 'Coffee' });
+    const opp = await create('/opportunities', { name: 'Phase 2', stage: 'Scoping', value: 5000 });
+    await api('PUT', `/opportunities/${opp.id}/contacts`, { contactIds: [dan.id] });
+
+    const all = new Map((await api('GET', '/reports/contacts')).body.data.map((r: any) => [r.contactId, r.lastActivity]));
+    assert.equal(all.get(dan.id), '2026-11-06', 'a trip mentioning the full name is later than the note');
+    assert.equal(all.get(ann.id), '2026-08-15', 'a one-word name does not match trips');
+    assert.equal(all.get(co.id), '2026-10-01', 'company matched through the trip purpose');
+
+    const one = (await api('GET', `/reports/contacts/${dan.id}`)).body.data
+    assert.deepEqual(one.trips.map((t: any) => [t.tripDate, t.miles]), [['2026-11-06', 12]]);
+    assert.deepEqual(one.opportunities.map((o: any) => [o.name, o.stage]), [['Phase 2', 'Scoping']]);
+    assert.equal((await api('GET', '/reports/contacts/00000000-0000-4000-8000-000000000000')).status, 404);
+  });
+});
+
 describe('mileage', () => {
   test('miles and deduction by month, client, vehicle and kind', async () => {
     const { data } = (await api('GET', '/reports/mileage?from=2026-01-01&to=2026-12-31')).body;

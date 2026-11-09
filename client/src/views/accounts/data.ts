@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { activitiesKey } from '../../api/activities.ts'
 import { api, getAll, qs, type One } from '../../api/client.ts'
-import type { Account, AccountInput, AccountStats, AccountSummary, Activity, ActivityType, Contact, Opportunity } from '../../api/types.ts'
+import type { Account, AccountInput, AccountStats, AccountSummary, Contact, Opportunity } from '../../api/types.ts'
 
 const thisYear = () => new Date().getFullYear()
 
@@ -9,7 +10,6 @@ export const keys = {
   stats: ['reports', 'accounts'] as const,
   summary: (id: string) => ['reports', 'accounts', id] as const,
   contacts: (id: string) => ['contacts', { accountId: id }] as const,
-  activities: (id: string) => ['activities', { accountId: id }] as const,
   opportunities: (id: string) => ['opportunities', { accountId: id }] as const,
 }
 
@@ -33,9 +33,6 @@ export const useAccountSummary = (id: string) =>
 
 export const useAccountContacts = (id: string) =>
   useQuery({ queryKey: keys.contacts(id), queryFn: () => getAll<Contact>('/contacts', { accountId: id }) })
-
-export const useAccountActivities = (id: string) =>
-  useQuery({ queryKey: keys.activities(id), queryFn: () => getAll<Activity>('/activities', { accountId: id }) })
 
 export const useAccountOpportunities = (id: string) =>
   useQuery({ queryKey: keys.opportunities(id), queryFn: () => getAll<Opportunity>('/opportunities', { accountId: id }) })
@@ -69,31 +66,14 @@ export function useAccountMutations() {
       mutationFn: (id: string) => api.del(`/accounts/${id}`),
       onSuccess: (_, id) => {
         // Drop the deleted account's cached details so nothing asks the server for them again.
-        for (const key of [keys.summary(id), keys.contacts(id), keys.activities(id), keys.opportunities(id)]) {
+        for (const key of [keys.summary(id), keys.contacts(id), activitiesKey({ accountId: id }), keys.opportunities(id)]) {
           qc.removeQueries({ queryKey: key, exact: true })
         }
         qc.setQueryData<Account[]>(keys.accounts, (list) => list?.filter((x) => x.id !== id))
+        // Contacts linked to it are unlinked by the database.
+        qc.invalidateQueries({ queryKey: ['contacts'] })
         refresh()
       },
-    }),
-  }
-}
-
-export function useActivityMutations(accountId: string) {
-  const qc = useQueryClient()
-  const refresh = () => {
-    qc.invalidateQueries({ queryKey: keys.activities(accountId) })
-    qc.invalidateQueries({ queryKey: ['reports', 'accounts'] })
-  }
-  return {
-    add: useMutation({
-      mutationFn: (body: { activityDate: string; type: ActivityType; body: string }) =>
-        api.post<One<Activity>>('/activities', { ...body, accountId }),
-      onSuccess: refresh,
-    }),
-    remove: useMutation({
-      mutationFn: (id: string) => api.del(`/activities/${id}`),
-      onSuccess: refresh,
     }),
   }
 }

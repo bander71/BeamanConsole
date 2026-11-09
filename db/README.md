@@ -85,3 +85,5 @@ These were checks in the prototype's JavaScript. Now the database enforces them,
 - **Data import.** A script to load a prototype backup (the **Back up** button's JSON) into these tables. The prototype's built-in data has been checked against the schema and fits with no conflicts. Things the import must convert:
   - Tax rates: the prototype stores percentages (`8.65`), but these tables store fractions (`0.0865`).
   - Billed hours: invoice lines in the prototype point at billed hours with a `sheet|task|day` key. These must be matched to `time_entries` rows.
+  - Contact emails: the API only accepts valid email addresses, and 2 emails in the prototype's built-in contacts aren't valid. The import should keep them somewhere visible (for example, in the contact's notes) rather than drop them.
+  - Contact links: set each contact's `account_id` by matching its company against account names and aliases, as the prototype does.

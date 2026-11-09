@@ -224,6 +224,8 @@ These are read-only, and the math matches the prototype's screens. Periods are `
 | `GET /reports/invoicing?year=` | Outstanding and overdue balances, unbilled T&M time, amount invoiced and collected in the year |
 | `GET /reports/accounts?year=` | For every account: linked people, hours (all time and in the year), billing value and miles in the year, and last activity (latest of work, notes and trips). Feeds the Accounts list |
 | `GET /reports/accounts/:id?year=` | The same for one account, plus its tasks with hours in the year and all time |
+| `GET /reports/contacts` | For every contact: the last date they were contacted (latest logged note or trip). Feeds the Contacts list's "Last contacted" sort and CSV |
+| `GET /reports/contacts/:id` | The same for one contact, plus their trips (newest first) and opportunities. Trips match like the prototype: linked to the contact, or for a person, the trip's contact text contains their full name; for a company, the trip's purpose or contact text contains the company name |
 | `GET /reports/mileage?from=&to=` | Trips, miles and deduction value (miles × IRS rate on the trip date) by month, client, vehicle and kind |
 
 Profit and loss bases (`basis=cash` is the default):

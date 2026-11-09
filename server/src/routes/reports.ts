@@ -437,6 +437,54 @@ reportRoutes.get('/reports/accounts/:id', async (req, res) => {
   res.json({ data: { year: y, ...accountStat(stats), tasks: tasks.map((t) => ({ ...camelRow(t), hours: round2(t.hours), hoursYear: round2(t.hours_year) })) } });
 });
 
+// ---- contacts ---------------------------------------------------------------------------------------
+// GET /reports/contacts
+// For every contact: the last date they were contacted (latest logged note or trip).
+//
+// GET /reports/contacts/:id
+// The same for one contact, plus their trips (newest first) and opportunities.
+//
+// Trips are matched like the prototype: a trip linked to the contact, or for a
+// person, a trip whose contact text contains their full name (at least 4
+// characters with a space); for a company, a trip whose purpose or contact
+// text contains the company name.
+
+const TRIP_MATCHES_CONTACT = `(
+  t.contact_id = c.id
+  OR (c.kind <> 'company' AND length(c.name) >= 4 AND strpos(c.name, ' ') > 0
+      AND strpos(lower(t.contact_name), lower(c.name)) > 0)
+  OR (c.kind = 'company' AND c.name <> ''
+      AND strpos(lower(t.purpose || ' ' || t.contact_name), lower(c.name)) > 0))`;
+
+const CONTACT_LAST = `
+  SELECT c.id AS contact_id,
+    nullif(greatest(
+      coalesce((SELECT max(a.activity_date) FROM activities a WHERE a.contact_id = c.id), '0001-01-01'),
+      coalesce((SELECT max(t.trip_date) FROM trips t WHERE ${TRIP_MATCHES_CONTACT}), '0001-01-01')
+    ), '0001-01-01') AS last_activity
+  FROM contacts c`;
+
+reportRoutes.get('/reports/contacts', async (_req, res) => {
+  const { rows } = await pool.query(CONTACT_LAST);
+  res.json({ data: rows.map(camelRow) });
+});
+
+reportRoutes.get('/reports/contacts/:id', async (req, res) => {
+  const id = req.params.id;
+  if (!/^[0-9a-f-]{36}$/i.test(id)) throw notFound('Contact');
+  const { rows: [last] } = await pool.query(`SELECT * FROM (${CONTACT_LAST}) x WHERE contact_id = $1`, [id]);
+  if (!last) throw notFound('Contact');
+  const { rows: trips } = await pool.query(
+    `SELECT t.id, t.trip_date, t.kind, t.purpose, t.miles, t.client_name, t.contact_name
+     FROM trips t, contacts c WHERE c.id = $1 AND ${TRIP_MATCHES_CONTACT}
+     ORDER BY t.trip_date DESC, t.created_at DESC`, [id]);
+  const { rows: opps } = await pool.query(
+    `SELECT o.id, o.name, o.stage, o.value, o.target_close, o.account_id
+     FROM opportunity_contacts oc JOIN opportunities o ON o.id = oc.opportunity_id
+     WHERE oc.contact_id = $1 ORDER BY o.target_close NULLS LAST, o.name`, [id]);
+  res.json({ data: { ...camelRow(last), trips: trips.map(camelRow), opportunities: opps.map(camelRow) } });
+});
+
 // ---- mileage ----------------------------------------------------------------------------------------
 // GET /reports/mileage?from=&to=
 // Miles and deduction value (miles x IRS rate on the trip date) by month, client,
