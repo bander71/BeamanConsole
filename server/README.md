@@ -104,6 +104,8 @@ The field rules for each resource are in [`src/resources.ts`](src/resources.ts).
 | `GET /health` | `{ ok: true }` when the API can reach the database |
 | `GET /opportunities/:id/contacts` | Contacts on an opportunity |
 | `PUT /opportunities/:id/contacts` | Replace them: `{ "contactIds": [...] }` |
+| `GET /opportunity-contacts` | Every opportunity–contact link, as `{ opportunityId, contactId }` (for the pipeline board) |
+| `POST /opportunities/:id/convert` | Turn an opportunity into a project: `{ code, name, type?, startDate? }`. Creates the project for the opportunity's account with the opportunity's value as the contract value, links it, and marks the opportunity Won, all in one transaction. `409` if it already has a project or the code is taken |
 | `GET /mileage-rates` | All mileage rates |
 | `GET /mileage-rates/lookup?date=&kind=` | The rate in effect on a date (`kind` is `business` or `charitable`) |
 | `PUT /mileage-rates/:kind/:effectiveDate` | Set a rate: `{ "ratePerMile": 0.70 }` |

@@ -110,12 +110,14 @@ export function ContactDetail({ contact: c, contacts, accounts, account }: {
             <ul className="tl">
               {opps.length ? opps.map((o) => (
                 <li key={o.id}>
-                  <span>{o.name}</span>
+                  <button className="btn quiet sm" onClick={() => navigate('/pipeline/' + o.id)}>{o.name}</button>
                   <span className={'pill ' + stageClass(o.stage)} style={{ marginLeft: 'auto' }}>{o.stage}</span>
                   <span className="num">{fm(o.value)}</span>
                 </li>
               )) : <li className="note">No opportunities yet.</li>}
             </ul>
+            <button className="btn sm"
+              onClick={() => navigate(`/pipeline/new?contact=${c.id}${account ? '&account=' + account.id : ''}`)}>New opportunity</button>
 
             {trips.length > 0 && (
               <>

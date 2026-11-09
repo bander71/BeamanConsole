@@ -32,9 +32,10 @@ Open http://localhost:5173. The dev server passes `/api` requests to the API on 
 | Timesheet | ✅ Weekly grid for any resource and week, saved as you type. Hours take decimals (1.5) or h:mm (1:30); invalid entries are flagged and not saved. Up, Down and Enter move between rows. Add and remove lines, notes per line, copy lines from last week, daily and weekly totals, and submit, approve, return (with a note), recall and reopen. Hours already on an invoice show as locked cells. The Approvals tab shows how many sheets are waiting |
 | Approvals | ✅ Timesheets waiting for approval with hours, billable hours, billing value and cost; approve, or return with a note; Open jumps to the sheet. "Show every timesheet" lists all sheets with their status (and the reason for any returned sheet), and the choice is remembered |
 | Mileage | ✅ Log or edit a trip: start reading fills in from the vehicle's last trip, both readings fill in the miles, live value preview at the IRS rate for the date, and "Repeat a frequent trip" buttons. Period, vehicle and type filters; trips, business and charitable miles and deduction value; by month (with bars) and by client; each vehicle's year with business-use share; the trips list (click to edit, delete with confirmation); CSV export |
+| Pipeline | ✅ Board of opportunities by stage with counts, totals and win likelihood; stats (open, weighted, closing this quarter, won this year, win rate); search and sales rep filter; drag cards between stages (Won and Lost record the date). Opportunity panel: details, linked contacts (grouped by "At this account"), notes, delete, and Convert to project, which suggests a project ID, creates the project and marks the deal Won in one step. Opportunity lists on Accounts and Contacts open the panel, and their "New opportunity" buttons pre-fill the account and contact |
 | Contacts | ✅ List with search, "Show" filter (people, linked to a client, follow-ups, possible duplicates, relationship), source filter and five sorts including group by company; detail with linked account, follow-ups, emails and phones with Copy, notes and activity, opportunities, mileage trips with the person, and "People here" for company entries; add, edit and delete; CSV export. Typing a company name links the contact to the matching account (by name or alias), as the prototype does |
 | Accounts | ✅ List with search, type filter and sorting; detail with stats, follow-ups, notes and activity, people, opportunities and timesheet work; add, edit (renaming keeps the old name as an alias, like the prototype), delete; CSV export |
-| Budgets, Pipeline, Invoices, Accounting, Reports, Employees, Setup | Not rebuilt yet. Each shows a placeholder; use the prototype for now |
+| Budgets, Invoices, Accounting, Reports, Employees, Setup | Not rebuilt yet. Each shows a placeholder; use the prototype for now |
 
 ### How the timesheet saves
 
@@ -60,6 +61,7 @@ src/
 │   ├── approvals/        Approvals screen
 │   ├── contacts/         Contacts screen: list, detail, form, data hooks
 │   ├── mileage/          Mileage screen: trip form, totals, vehicles, trips list
+│   ├── pipeline/         Pipeline board and the opportunity panel
 │   └── NotBuiltYet.tsx   Placeholder for screens still to rebuild
 └── styles/console.css    The prototype's stylesheet
 ```

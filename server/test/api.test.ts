@@ -196,6 +196,50 @@ describe('opportunity contacts', () => {
     assert.equal((await api('GET', `/opportunities/${MISSING_ID}/contacts`)).status, 404);
     assert.equal((await api('PUT', `/opportunities/${opp.id}/contacts`, { contactIds: [MISSING_ID] })).status, 400);
   });
+
+  test('lists every link for the board', async () => {
+    const a = await create('/opportunities', { name: 'A' });
+    const b = await create('/opportunities', { name: 'B' });
+    const c1 = await create('/contacts', { name: 'One' });
+    const c2 = await create('/contacts', { name: 'Two' });
+    await api('PUT', `/opportunities/${a.id}/contacts`, { contactIds: [c1.id, c2.id] });
+    await api('PUT', `/opportunities/${b.id}/contacts`, { contactIds: [c2.id] });
+    const links = (await api('GET', '/opportunity-contacts')).body.data;
+    assert.equal(links.length, 3);
+    assert.deepEqual(links.filter((l: any) => l.opportunityId === b.id).map((l: any) => l.contactId), [c2.id]);
+  });
+});
+
+describe('convert opportunity to project', () => {
+  test('creates the project, links it and marks the deal Won', async () => {
+    const acct = await create('/accounts', { name: 'Acme', type: 'Client' });
+    const opp = await create('/opportunities', { name: 'Acme Phase 2', accountId: acct.id, stage: 'Proposal Sent', value: 48000, type: 'Flat Fee' });
+    const res = await api('POST', `/opportunities/${opp.id}/convert`, { code: 'acme26', name: 'Acme Phase 2', startDate: '2026-12-01' });
+    assert.equal(res.status, 201);
+    const { project, opportunity } = res.body.data;
+    assert.equal(project.code, 'ACME26');
+    assert.equal(project.accountId, acct.id);
+    assert.equal(project.type, 'Flat Fee', 'defaults to the opportunity type');
+    assert.equal(project.contractValue, 48000);
+    assert.equal(project.startDate, '2026-12-01');
+    assert.equal(opportunity.projectId, project.id);
+    assert.equal(opportunity.stage, 'Won');
+    assert.ok(opportunity.wonAt);
+
+    assert.equal((await api('POST', `/opportunities/${opp.id}/convert`, { code: 'X2', name: 'Again' })).status, 409, 'only once');
+  });
+
+  test('a duplicate project code changes nothing', async () => {
+    await create('/projects', { code: 'TAKEN', name: 'Existing' });
+    const opp = await create('/opportunities', { name: 'Deal', stage: 'Scoping' });
+    const res = await api('POST', `/opportunities/${opp.id}/convert`, { code: 'taken', name: 'Deal' });
+    assert.equal(res.status, 409);
+    const after = (await api('GET', `/opportunities/${opp.id}`)).body.data;
+    assert.equal(after.stage, 'Scoping', 'the opportunity is untouched');
+    assert.equal(after.projectId, null);
+    assert.equal((await api('POST', `/opportunities/${MISSING_ID}/convert`, { code: 'Z', name: 'Z' })).status, 404);
+    assert.equal((await api('POST', `/opportunities/${opp.id}/convert`, { name: 'No code' })).status, 400);
+  });
 });
 
 describe('mileage rates', () => {

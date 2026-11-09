@@ -232,7 +232,27 @@ export interface Opportunity {
   id: string
   name: string
   accountId: string | null
+  repId: string | null
+  projectId: string | null
   stage: Stage
+  type: 'T&M' | 'Flat Fee'
   value: number
   targetClose: string | null
+  wonAt: string | null
+  closedAt: string | null
+  description: string
+  createdAt: string
+  updatedAt: string
+}
+
+export type OpportunityInput = Partial<Omit<Opportunity, 'id' | 'createdAt' | 'updatedAt'>>
+
+export interface Employee {
+  id: string
+  firstName: string
+  lastName: string
+  title: string
+  email: string | null
+  phone: string
+  active: boolean
 }

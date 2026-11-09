@@ -2,8 +2,8 @@
 
 import { Router } from 'express';
 import { z } from 'zod';
-import { query, transaction } from '../db.ts';
-import { notFound } from '../errors.ts';
+import { camelRow, query, transaction } from '../db.ts';
+import { HttpError, notFound } from '../errors.ts';
 import { TRIP_KINDS } from '../resources.ts';
 
 export const extraRoutes = Router();
@@ -46,6 +46,45 @@ extraRoutes.put('/opportunities/:id/contacts', async (req, res) => {
     }
   });
   res.json({ data: await listOppContacts(req.params.id) });
+});
+
+// GET /opportunity-contacts -> every opportunity-contact link, for the pipeline board.
+extraRoutes.get('/opportunity-contacts', async (_req, res) => {
+  res.json({ data: await query('SELECT opportunity_id, contact_id FROM opportunity_contacts') });
+});
+
+// ---- Convert an opportunity to a project ---------------------------------------
+// POST /opportunities/:id/convert   { code, name, type?, startDate? }
+// Creates the project for the opportunity's account (contract value = the
+// opportunity's value), links it, and marks the opportunity Won. All or nothing.
+
+const convertBody = z.strictObject({
+  code: z.string().trim().toUpperCase().regex(/^[A-Z0-9_-]{1,20}$/, 'Use 1-20 letters, numbers, - or _'),
+  name: z.string().trim().min(1).max(200),
+  type: z.enum(['T&M', 'Flat Fee']).optional(),
+  startDate: z.iso.date().optional(),
+});
+
+extraRoutes.post('/opportunities/:id/convert', async (req, res) => {
+  const body = convertBody.parse(req.body ?? {});
+  if (!UUID.test(req.params.id)) throw notFound('Opportunity');
+  const result = await transaction(async (client) => {
+    const { rows: [opp] } = await client.query('SELECT * FROM opportunities WHERE id = $1 FOR UPDATE', [req.params.id]);
+    if (!opp) throw notFound('Opportunity');
+    if (opp.project_id) throw new HttpError(409, 'This opportunity already has a project');
+    const { rows: [project] } = await client.query(
+      `INSERT INTO projects (code, name, type, account_id, contract_value, start_date)
+       VALUES ($1, $2, $3, $4, $5, coalesce($6::date, current_date)) RETURNING *`,
+      [body.code, body.name, body.type ?? opp.type, opp.account_id, opp.value, body.startDate ?? null],
+    );
+    const { rows: [updated] } = await client.query(
+      `UPDATE opportunities SET project_id = $2, stage = 'Won', won_at = coalesce(won_at, current_date)
+       WHERE id = $1 RETURNING *`,
+      [opp.id, project.id],
+    );
+    return { project: camelRow(project), opportunity: camelRow(updated) };
+  });
+  res.status(201).json({ data: result });
 });
 
 // ---- Mileage rates -------------------------------------------------------------
