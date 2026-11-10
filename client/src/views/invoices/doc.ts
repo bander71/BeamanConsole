@@ -1,4 +1,5 @@
-import type { Invoice, LineKind } from './data.ts'
+import type { Invoice, InvoiceSettings, LineKind } from './data.ts'
+import banner from './invoice-banner.png'
 
 /** A line as it's being edited: quantity and rate stay as typed until saved. */
 export interface DocLine {
@@ -61,3 +62,10 @@ export function toDoc(i: Invoice): DocState {
     })),
   }
 }
+
+/** Where the banner picture is served from; the downloaded file swaps in an embedded copy. */
+export const BANNER_URL = banner
+
+/** The template's banner (logo and tagline on navy), used unless the logo or tagline in settings has been changed. */
+export const usesBanner = (s: InvoiceSettings) =>
+  (s.logo || 'BEAMAN').replace(/\.$/, '').toUpperCase() === 'BEAMAN' && ['', 'business & technology'].includes(s.tagline.trim().toLowerCase())

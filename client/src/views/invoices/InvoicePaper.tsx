@@ -1,6 +1,6 @@
 import { addDays, fh, fm2, parse } from '../../lib/format.ts'
 import type { InvoiceSettings } from './data.ts'
-import { docTotals, lineAmount, num, termsLabel, TERMS, type DocLine, type DocState, r2 } from './doc.ts'
+import { docTotals, lineAmount, num, termsLabel, TERMS, usesBanner, BANNER_URL, type DocLine, type DocState, r2 } from './doc.ts'
 
 const longDate = (d: string) => parse(d).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
 
@@ -31,22 +31,26 @@ export function InvoicePaper({ d, settings: s, paid, edit }: Props) {
 
   return (
     <>
-      <div className="iv-top">
-        {/^(data:|https?:|\/)/.test(logo) ? (
-          <img src={logo} alt={s.company} style={{ maxHeight: 56 }} />
-        ) : (
-          <div className="iv-logo">
-            {logo.replace(/\.$/, '')}
-            <i>.</i>
-          </div>
-        )}
-        {s.tagline && (
-          <>
-            <div className="iv-sep" />
-            <div className="iv-tag">{s.tagline}</div>
-          </>
-        )}
-      </div>
+      {usesBanner(s) ? (
+        <img className="iv-banner" src={BANNER_URL} alt={`${s.company} — ${s.tagline}`} />
+      ) : (
+        <div className="iv-top">
+          {/^(data:|https?:|\/)/.test(logo) ? (
+            <img src={logo} alt={s.company} style={{ maxHeight: 56 }} />
+          ) : (
+            <div className="iv-logo">
+              {logo.replace(/\.$/, '')}
+              <i>.</i>
+            </div>
+          )}
+          {s.tagline && (
+            <>
+              <div className="iv-sep" />
+              <div className="iv-tag">{s.tagline}</div>
+            </>
+          )}
+        </div>
+      )}
       <div className="iv-body">
         <div className="iv-head">
           <div className="iv-meta">
