@@ -106,6 +106,7 @@ The field rules for each resource are in [`src/resources.ts`](src/resources.ts).
 | `PUT /opportunities/:id/contacts` | Replace them: `{ "contactIds": [...] }` |
 | `GET /opportunity-contacts` | Every opportunity–contact link, as `{ opportunityId, contactId }` (for the pipeline board) |
 | `POST /opportunities/:id/convert` | Turn an opportunity into a project: `{ code, name, type?, startDate? }`. Creates the project for the opportunity's account with the opportunity's value as the contract value, links it, and marks the opportunity Won, all in one transaction. `409` if it already has a project or the code is taken |
+| `POST /contacts/import/linkedin` | Merge LinkedIn connections into Contacts: `{ rows: [{ firstName, lastName, url, email, company, position, connectedOn }], apply? }`. Matches existing contacts by LinkedIn link (in website or notes), then email, then a single contact with that name; fills only blank title, company (and its account), email and link, and adds a `LinkedIn` tag. Unmatched rows become new contacts with source `LinkedIn`; rows with no name are skipped. Without `apply: true` it's a preview: it runs the same steps, rolls them back and returns the counts and lists of what would change |
 | `GET /invoice-payments?from=&to=` | Every invoice payment, newest first, with its invoice number and client (for the Accounting ledger) |
 | `GET /mileage-rates` | All mileage rates |
 | `GET /mileage-rates/lookup?date=&kind=` | The rate in effect on a date (`kind` is `business` or `charitable`) |
@@ -265,12 +266,14 @@ src/
 ├── resources.ts    Field rules for each standard resource
 └── routes/
     ├── extra.ts       Endpoints that don't fit the standard pattern
+    ├── contactImport.ts  LinkedIn connections import
     ├── timesheets.ts  Weekly grid, status flow, copy-previous
     ├── invoices.ts    Unbilled time, drafts, lines, send/void, payments
     └── reports.ts     Budgets, time, P&L, receivables, contractors, mileage
 test/
 ├── helpers.ts           Starts the app against the test database
 ├── api.test.ts
+├── contactImport.test.ts
 ├── timesheets.test.ts
 ├── invoices.test.ts
 └── reports.test.ts      Checks every report against hand-worked numbers

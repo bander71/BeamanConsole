@@ -3,6 +3,7 @@ import { crudRouter } from './crud.ts';
 import { pool } from './db.ts';
 import { errorHandler, HttpError } from './errors.ts';
 import { resourceDefs } from './resources.ts';
+import { contactImportRoutes } from './routes/contactImport.ts';
 import { extraRoutes } from './routes/extra.ts';
 import { invoiceRoutes } from './routes/invoices.ts';
 import { reportRoutes } from './routes/reports.ts';
@@ -21,6 +22,7 @@ export function createApp() {
     res.json({ ok: true });
   });
 
+  api.use(contactImportRoutes);
   api.use(extraRoutes);
   api.use(timesheetRoutes);
   api.use(invoiceRoutes);
