@@ -35,9 +35,22 @@ beaman-console/
 
 ## Run it locally
 
-1. Set up the database and start the API: [server/README.md](server/README.md#first-time-setup).
-2. In a second terminal, start the frontend: [client/README.md](client/README.md#run-it).
-3. Open http://localhost:5173.
+**Every day:** double-click **`Start Beaman Console.cmd`** in this folder. It starts the app's database if it isn't running, opens two windows (the API and the web app), and opens http://localhost:5173 when it's ready. Close the two windows to stop the app; the database stops when Windows shuts down.
+
+**Once, first:** run the setup in PowerShell from this folder:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\setup-local.ps1
+```
+
+It gives the app its own database, using the PostgreSQL programs already installed but without needing the `postgres` password:
+
+- The data lives in `%LOCALAPPDATA%\BeamanConsole\pgdata` (outside OneDrive, so syncing can't damage it), on port 5433, reachable only from this computer.
+- It makes up a password for the app's database user and saves it in `server/.env`, which git ignores.
+- It installs packages if needed and creates the tables. Add `-CopyFrom "postgres://user@host:port/dbname"` to copy all data from another database into the new one.
+- Running it again is safe: it keeps the database and its data.
+
+To run the pieces by hand instead (for development), see [server/README.md](server/README.md#first-time-setup) and [client/README.md](client/README.md#run-it).
 
 ## Local tools
 
