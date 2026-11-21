@@ -1,5 +1,4 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { api } from '../../api/client.ts'
+import { parseCsv } from '../../lib/csv.ts'
 
 /** One connection from LinkedIn's Connections.csv. */
 export interface Connection {
@@ -10,53 +9,6 @@ export interface Connection {
   company: string
   position: string
   connectedOn: string | null
-}
-
-export interface ImportResult {
-  applied: boolean
-  connections: number
-  skippedNoName: number
-  matchedByLink: number
-  matchedByEmail: number
-  matchedByName: number
-  updated: number
-  unchanged: number
-  added: number
-  linkedToAccount: number
-  updates: { contactId: string; name: string; fields: string[] }[]
-  additions: { name: string; company: string; title: string }[]
-}
-
-/** Splits CSV text into rows of cells (handles quotes, doubled quotes and line breaks inside quotes). */
-export function parseCsv(text: string): string[][] {
-  const rows: string[][] = []
-  let row: string[] = [], cell = '', quoted = false
-  for (let i = 0; i < text.length; i++) {
-    const ch = text[i]
-    if (quoted) {
-      if (ch === '"') {
-        if (text[i + 1] === '"') {
-          cell += '"'
-          i++
-        } else quoted = false
-      } else cell += ch
-    } else if (ch === '"') quoted = true
-    else if (ch === ',') {
-      row.push(cell)
-      cell = ''
-    } else if (ch === '\n' || ch === '\r') {
-      if (ch === '\r' && text[i + 1] === '\n') i++
-      row.push(cell)
-      rows.push(row)
-      row = []
-      cell = ''
-    } else cell += ch
-  }
-  if (cell || row.length) {
-    row.push(cell)
-    rows.push(row)
-  }
-  return rows
 }
 
 const MON: Record<string, string> = { Jan: '01', Feb: '02', Mar: '03', Apr: '04', May: '05', Jun: '06', Jul: '07', Aug: '08', Sep: '09', Oct: '10', Nov: '11', Dec: '12' }
@@ -85,17 +37,4 @@ export function parseConnections(text: string): Connection[] {
       position: at(r, 'Position'),
       connectedOn: isoDate(at(r, 'Connected On')),
     }))
-}
-
-/** Preview (apply: false) or run the import, then refresh contacts and their reports. */
-export function useLinkedInImport() {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: async (b: { rows: Connection[]; apply: boolean }) => (await api.post<{ data: ImportResult }>('/contacts/import/linkedin', b)).data,
-    onSuccess: (r) => {
-      if (!r.applied) return
-      qc.invalidateQueries({ queryKey: ['contacts'] })
-      qc.invalidateQueries({ queryKey: ['reports'] })
-    },
-  })
 }

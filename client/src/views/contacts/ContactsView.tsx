@@ -6,7 +6,7 @@ import { today } from '../../lib/format.ts'
 import { useAccounts } from '../accounts/data.ts'
 import { ContactDetail } from './ContactDetail.tsx'
 import { ContactForm } from './ContactForm.tsx'
-import { LinkedInImport } from './LinkedInImport.tsx'
+import { ContactImport, type SourceKey } from './ContactImport.tsx'
 import { accountMatcher, contactInitials, findDuplicates, isCompany, useContactLast, useContacts } from './data.ts'
 
 type Sort = 'name' | 'company' | 'touch' | 'followup' | 'added'
@@ -33,7 +33,7 @@ export function ContactsView() {
   const [source, setSource] = useState('')
   const [sort, setSort] = useState<Sort>('name')
   const [creating, setCreating] = useState(false)
-  const [importing, setImporting] = useState(false)
+  const [importing, setImporting] = useState<SourceKey | null>(null)
   const [td] = useState(today)
 
   const contacts = contactsQ.data ?? NO_CONTACTS
@@ -113,12 +113,13 @@ export function ContactsView() {
           <h1>Contacts</h1>
         </div>
         <span className="spacer" />
-        <button className="btn" onClick={() => setImporting((v) => !v)}>Import from LinkedIn</button>
+        <button className="btn" onClick={() => setImporting((v) => (v === 'linkedin' ? null : 'linkedin'))}>Import from LinkedIn</button>
+        <button className="btn" onClick={() => setImporting((v) => (v === 'outlook' ? null : 'outlook'))}>Import from Outlook</button>
         <button className="btn" onClick={exportCsv}>Export (CSV)</button>
         <button className="btn primary" onClick={() => setCreating(true)}>Add contact</button>
       </div>
 
-      {importing && <LinkedInImport onClose={() => setImporting(false)} />}
+      {importing && <ContactImport key={importing} source={importing} onClose={() => setImporting(null)} />}
 
       <div className="row">
         <input className="field" type="search" placeholder="Search name, company, email, phone, notes…" value={q}

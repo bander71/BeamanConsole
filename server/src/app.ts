@@ -5,6 +5,7 @@ import { errorHandler, HttpError } from './errors.ts';
 import { resourceDefs } from './resources.ts';
 import { contactImportRoutes } from './routes/contactImport.ts';
 import { extraRoutes } from './routes/extra.ts';
+import { outlookImportRoutes } from './routes/outlookImport.ts';
 import { invoiceRoutes } from './routes/invoices.ts';
 import { reportRoutes } from './routes/reports.ts';
 import { timesheetRoutes } from './routes/timesheets.ts';
@@ -23,6 +24,7 @@ export function createApp() {
   });
 
   api.use(contactImportRoutes);
+  api.use(outlookImportRoutes);
   api.use(extraRoutes);
   api.use(timesheetRoutes);
   api.use(invoiceRoutes);
