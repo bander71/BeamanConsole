@@ -12,11 +12,14 @@
     "dev": "node --env-file-if-exists=.env --watch src/index.ts",
     "migrate": "node --env-file-if-exists=.env src/migrate.ts",
     "import:harvest": "node --env-file-if-exists=.env scripts/import-harvest.ts",
+    "import:harvest-invoices": "node --env-file-if-exists=.env scripts/import-harvest-invoices.ts",
+    "import:ledger": "node --env-file-if-exists=.env scripts/import-ledger.ts",
     "test": "node --env-file-if-exists=.env.test --test --test-concurrency=1 \"test/**/*.test.ts\"",
     "typecheck": "tsc"
   },
   "dependencies": {
     "express": "^5.3.0",
+    "openid-client": "^6.9.1",
     "pg": "^8.23.1",
     "zod": "^4.6.7"
   },

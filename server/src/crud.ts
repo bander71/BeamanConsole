@@ -8,9 +8,10 @@
 //
 // The API speaks camelCase; columns are the snake_case form of each field name.
 
-import { Router } from 'express';
+import { type Request, Router } from 'express';
 import { z } from 'zod';
 import { ident, query, toSnake } from './db.ts';
+import { ownScope } from './auth/session.ts';
 import { HttpError, notFound } from './errors.ts';
 
 export type FilterType = 'text' | 'uuid' | 'bool' | 'int';
@@ -31,6 +32,12 @@ export interface ResourceDef {
   dateColumn?: string;
   /** ORDER BY clause for lists. */
   orderBy: string;
+  /**
+   * For areas with "own records only" (see auth/permissions.ts): the area, and the
+   * camelCase field holding the record's resource. Users limited to their own
+   * records only see and change rows where it's their linked resource.
+   */
+  owner?: { area: string; field: string };
 }
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -78,6 +85,18 @@ export function crudRouter(def: ResourceDef): Router {
     return raw;
   };
 
+  const ownerCol = def.owner ? ident(toSnake(def.owner.field)) : '';
+  /** The user's resource when they're limited to their own records, else null. */
+  const scopeOf = (req: Request) => (def.owner ? ownScope(req, def.owner.area) : null);
+  /** Refuses a body that would put the record on someone else, and fills in the user's own resource on create. */
+  const checkOwner = (scope: string | null, body: Record<string, unknown>, creating: boolean) => {
+    if (scope === null || !def.owner) return;
+    if (!scope) throw new HttpError(403, "Your user isn't linked to a person who logs time yet. Ask an admin to link you under Users.");
+    const f = def.owner.field;
+    if (creating && body[f] === undefined) body[f] = scope;
+    if (body[f] !== undefined && body[f] !== scope) throw new HttpError(403, 'You can only add or change your own records');
+  };
+
   router.get('/', async (req, res) => {
     const { q, from, to, limit, offset } = listQuery.parse(req.query);
     const where: string[] = [];
@@ -86,6 +105,8 @@ export function crudRouter(def: ResourceDef): Router {
       values.push(value);
       where.push(sql('$' + values.length));
     };
+    const scope = scopeOf(req);
+    if (scope !== null) add((p) => `${ownerCol} = ${p}`, scope || null);
 
     for (const [name, type] of Object.entries(def.filters ?? {})) {
       if (req.query[name] === undefined) continue;
@@ -121,13 +142,18 @@ export function crudRouter(def: ResourceDef): Router {
   });
 
   router.get('/:id', async (req, res) => {
-    const [row] = await query(`SELECT * FROM ${table} WHERE id = $1`, [idParam(req.params.id)]);
+    const scope = scopeOf(req);
+    const [row] = await query(
+      `SELECT * FROM ${table} WHERE id = $1${scope !== null ? ` AND ${ownerCol} = $2` : ''}`,
+      scope !== null ? [idParam(req.params.id), scope || null] : [idParam(req.params.id)],
+    );
     if (!row) throw notFound(def.label);
     res.json({ data: row });
   });
 
   router.post('/', async (req, res) => {
     const body = createSchema.parse(req.body ?? {});
+    checkOwner(scopeOf(req), body, true);
     const { cols, values } = columnsFor(body);
     const [row] = await query(
       cols.length
@@ -141,17 +167,24 @@ export function crudRouter(def: ResourceDef): Router {
   router.patch('/:id', async (req, res) => {
     const id = idParam(req.params.id);
     const body = updateSchema.parse(req.body ?? {});
+    const scope = scopeOf(req);
+    checkOwner(scope, body, false);
     const { cols, values } = columnsFor(body);
     const [row] = await query(
-      `UPDATE ${table} SET ${cols.map((c, i) => `${c} = $${i + 2}`).join(', ')} WHERE id = $1 RETURNING *`,
-      [id, ...values],
+      `UPDATE ${table} SET ${cols.map((c, i) => `${c} = $${i + 2}`).join(', ')} WHERE id = $1
+       ${scope !== null ? `AND ${ownerCol} = $${values.length + 2}` : ''} RETURNING *`,
+      scope !== null ? [id, ...values, scope || null] : [id, ...values],
     );
     if (!row) throw notFound(def.label);
     res.json({ data: row });
   });
 
   router.delete('/:id', async (req, res) => {
-    const [row] = await query(`DELETE FROM ${table} WHERE id = $1 RETURNING id`, [idParam(req.params.id)]);
+    const scope = scopeOf(req);
+    const [row] = await query(
+      `DELETE FROM ${table} WHERE id = $1${scope !== null ? ` AND ${ownerCol} = $2` : ''} RETURNING id`,
+      scope !== null ? [idParam(req.params.id), scope || null] : [idParam(req.params.id)],
+    );
     if (!row) throw notFound(def.label);
     res.status(204).end();
   });

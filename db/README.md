@@ -6,7 +6,8 @@ PostgreSQL schema for Beaman Console.
 db/
 ├── migrations/   Numbered SQL files, applied in order
 │   ├── 001_initial_schema.sql
-│   └── 002_time_billed_outside.sql   Time billed outside the app; where imported time came from
+│   ├── 002_time_billed_outside.sql   Time billed outside the app; where imported time came from
+│   └── 003_invoice_source.sql        Where an invoice came from (`harvest`) and its stored original PDF
 └── tests/
     └── smoke_test.sql   Inserts sample data, checks the rules, rolls back
 ```

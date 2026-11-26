@@ -1,5 +1,7 @@
 // Small wrapper around fetch for the Node API at /api.
 
+import { SIGNED_OUT_EVENT } from './auth.ts'
+
 export class ApiError extends Error {
   status: number
   details?: unknown
@@ -21,6 +23,8 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
   } catch {
     throw new ApiError(0, "Can't reach the server. Check that the API is running.")
   }
+  // The session ended (signed out elsewhere, timed out, or turned off): show the sign-in page.
+  if (res.status === 401 && !path.startsWith('/auth/')) window.dispatchEvent(new Event(SIGNED_OUT_EVENT))
   if (res.status === 204) return undefined as T
   const text = await res.text()
   const json = text ? JSON.parse(text) : null

@@ -12,10 +12,11 @@
 // Hours can only be changed while the sheet is draft or returned, and hours
 // that are already on an invoice can never be changed here.
 
-import { Router } from 'express';
+import { type Request, Router } from 'express';
 import type pg from 'pg';
 import { z } from 'zod';
 import { camelRow, pool, query, transaction } from '../db.ts';
+import { ownScope, requirePermission } from '../auth/session.ts';
 import { HttpError, notFound } from '../errors.ts';
 
 export const timesheetRoutes = Router();
@@ -143,6 +144,34 @@ async function requireSheet(db: Queryable, id: string) {
   return sheet;
 }
 
+// ---- who may see and change which sheets ------------------------------------------
+// Users whose role limits Timesheet to "own records only" work only on their linked
+// resource's sheets. Approvals (read) lets them read everyone's.
+
+/** The resource the user is limited to, or null for everyone's. */
+const sheetScope = (req: Request, reading: boolean) =>
+  ownScope(req, 'timesheets', reading ? [{ area: 'approvals', action: 'read' }] : []);
+
+function assertOwnResource(req: Request, resourceId: string, reading: boolean) {
+  const scope = sheetScope(req, reading);
+  if (scope === null || scope === resourceId) return;
+  if (!scope) throw new HttpError(403, "Your user isn't linked to a person who logs time yet. Ask an admin to link you under Users.");
+  throw new HttpError(403, 'You can only work on your own timesheets');
+}
+
+async function assertOwnSheet(req: Request, sheetId: string, reading: boolean) {
+  if (sheetScope(req, reading) === null) return;
+  const { rows: [sheet] } = await pool.query('SELECT resource_id FROM timesheets WHERE id = $1', [sheetId]);
+  if (!sheet) throw notFound('Timesheet');
+  assertOwnResource(req, sheet.resource_id, reading);
+}
+
+/** Saving a week that has no sheet yet makes one, which needs "create". */
+async function assertCanStartWeek(req: Request, resourceId: string, weekStart: string) {
+  const { rows: [sheet] } = await pool.query('SELECT 1 FROM timesheets WHERE resource_id = $1 AND week_start = $2', [resourceId, weekStart]);
+  if (!sheet) requirePermission(req, 'timesheets', 'create');
+}
+
 async function requireResource(db: Queryable, id: string) {
   const { rows } = await db.query('SELECT id, name FROM resources WHERE id = $1', [id]);
   if (!rows[0]) throw notFound('Resource');
@@ -191,6 +220,8 @@ timesheetRoutes.get('/timesheets', async (req, res) => {
     where.push(sql.replace('?', '$' + values.length));
   };
   if (f.resourceId) add('ts.resource_id = ?', f.resourceId);
+  const scope = sheetScope(req, true);
+  if (scope !== null) add('ts.resource_id = ?', scope || null);
   if (f.status) add('ts.status = ?', f.status);
   if (f.from) add('ts.week_start >= ?', f.from);
   if (f.to) add('ts.week_start <= ?', f.to);
@@ -221,13 +252,16 @@ timesheetRoutes.get('/timesheets', async (req, res) => {
 // ---- one sheet --------------------------------------------------------------------
 
 timesheetRoutes.get('/timesheets/:id', async (req, res) => {
-  res.json({ data: await requireSheet(pool, sheetIdParam(req.params.id)) });
+  const id = sheetIdParam(req.params.id);
+  await assertOwnSheet(req, id, true);
+  res.json({ data: await requireSheet(pool, id) });
 });
 
 // GET /resources/:resourceId/timesheets/:weekStart
 // Returns the sheet for that week, or an empty draft (id: null) if none is saved yet.
 timesheetRoutes.get('/resources/:resourceId/timesheets/:weekStart', async (req, res) => {
   const { resourceId, weekStart } = weekParams.parse(req.params);
+  assertOwnResource(req, resourceId, true);
   const resource = await requireResource(pool, resourceId);
   const [row] = await query('SELECT id FROM timesheets WHERE resource_id = $1 AND week_start = $2', [resourceId, weekStart]);
   if (row) return void res.json({ data: await requireSheet(pool, row.id as string) });
@@ -256,6 +290,8 @@ const saveBody = z.strictObject({
 
 timesheetRoutes.put('/resources/:resourceId/timesheets/:weekStart', async (req, res) => {
   const { resourceId, weekStart } = weekParams.parse(req.params);
+  assertOwnResource(req, resourceId, false);
+  await assertCanStartWeek(req, resourceId, weekStart);
   const { lines } = saveBody.parse(req.body ?? {});
   const hoursOf = (l: (typeof lines)[number]) => l.hours.map(round2);
 
@@ -350,6 +386,8 @@ timesheetRoutes.put('/resources/:resourceId/timesheets/:weekStart', async (req, 
 
 timesheetRoutes.post('/resources/:resourceId/timesheets/:weekStart/copy-previous', async (req, res) => {
   const { resourceId, weekStart } = weekParams.parse(req.params);
+  assertOwnResource(req, resourceId, false);
+  await assertCanStartWeek(req, resourceId, weekStart);
   const result = await transaction(async (client) => {
     await requireResource(client, resourceId);
     const { rows: [prev] } = await client.query(
@@ -403,6 +441,8 @@ timesheetRoutes.post('/timesheets/:id/:action', async (req, res) => {
   const action = req.params.action;
   const t = Object.hasOwn(TRANSITIONS, action) ? TRANSITIONS[action] : undefined;
   if (!t) throw new HttpError(404, `No endpoint for POST ${req.originalUrl}`);
+  // Submit and recall are the sheet owner's; approve, return and reopen need Approvals (checked in app.ts).
+  if (action === 'submit' || action === 'recall') await assertOwnSheet(req, id, false);
 
   let param: unknown = null;
   if (action === 'approve') param = approveBody.parse(req.body ?? {}).approvedBy ?? null;
@@ -436,6 +476,7 @@ timesheetRoutes.post('/timesheets/:id/:action', async (req, res) => {
 
 timesheetRoutes.delete('/timesheets/:id', async (req, res) => {
   const id = sheetIdParam(req.params.id);
+  await assertOwnSheet(req, id, false);
   await transaction(async (client) => {
     const { rows: [sheet] } = await client.query('SELECT status FROM timesheets WHERE id = $1 FOR UPDATE', [id]);
     if (!sheet) throw notFound('Timesheet');

@@ -2,8 +2,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api, getAll, qs } from '../../api/client.ts'
 
 export const EXP_CATS = [
-  'Contractors (1099)', 'Software & subscriptions', 'Travel', 'Meals', 'Vehicle & fuel', 'Office & supplies', 'Insurance',
-  'Professional fees', 'Marketing', 'Equipment', 'Taxes & licenses', 'Bank & payment fees', 'Other expense',
+  'Contractors (1099)', 'Wages & payroll', 'Software & subscriptions', 'Travel', 'Meals', 'Vehicle & fuel', 'Office & supplies',
+  'Insurance', 'Professional fees', 'Marketing', 'Equipment', 'Taxes & licenses', 'Income tax payments',
+  'Bank & payment fees', 'Other expense',
 ] as const
 export const INC_CATS = ['Consulting revenue (outside invoices)', 'Reimbursements', 'Interest', 'Other income'] as const
 export const METHODS = ['ACH', 'Check', 'Card', 'Wire', 'Cash', 'Other'] as const

@@ -31,7 +31,7 @@ beaman-console/
 2. **API.** ✅ [`server/`](server/README.md) has endpoints for every area of the prototype: accounts, contacts, opportunities, people, projects, tasks, timesheets, invoices, mileage, the ledger and reports.
 3. **Frontend.** ✅ [`client/`](client/README.md) has every screen from the prototype: Timesheet, Approvals, Budgets, Mileage, Pipeline, Accounts, Contacts, Invoices, Accounting, Reports, Employees and Setup.
 4. **Migration.** Write a one-time import of existing `localStorage` data into Postgres.
-5. **Sign-in and roles.** Replace the prototype's editor/viewer checks with real authentication.
+5. **Sign-in and roles.** ✅ Microsoft (Entra ID) sign-in, roles with create/read/update/delete rights per area, and an audit log. See [server/README.md](server/README.md#sign-in-and-permissions).
 
 ## Run it locally
 
@@ -45,7 +45,7 @@ powershell -ExecutionPolicy Bypass -File scripts\setup-local.ps1
 
 It gives the app its own database, using the PostgreSQL programs already installed but without needing the `postgres` password:
 
-- The data lives in `%USERPROFILE%\BeamanConsoleData\pgdata`, on port 5433, reachable only from this computer. Backups from the Harvest import go in `%USERPROFILE%\BeamanConsoleData\backups`.
+- The data lives in `%USERPROFILE%\BeamanConsoleData\pgdata`, on port 5433, reachable only from this computer. Backups made before imports go in `%USERPROFILE%\BeamanConsoleData\backups`, and past invoices' original PDFs in `%USERPROFILE%\BeamanConsoleData\invoice-files`.
   - It's outside OneDrive, so syncing can't damage it.
   - It's outside AppData on purpose: apps like Claude Desktop can give programs they start a private copy of AppData, which would hide the database from the launcher you double-click.
 - It makes up a password for the app's database user and saves it in `server/.env`, which git ignores.

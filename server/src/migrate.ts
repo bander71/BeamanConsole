@@ -5,6 +5,7 @@
 
 import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
+import { ensureDefaultRoles } from './auth/permissions.ts';
 import { pool } from './db.ts';
 
 const MIGRATIONS_DIR = path.resolve(import.meta.dirname, '../../db/migrations');
@@ -39,6 +40,8 @@ export async function migrate(log: (msg: string) => void = console.log): Promise
       log(`Applied ${file}`);
     }
     if (!applied.length) log('Database is up to date');
+    // Built-in roles (Admin, Manager, ...) are added if missing; existing roles are left as they are.
+    await ensureDefaultRoles(client);
     return applied;
   } finally {
     await client.query('SELECT pg_advisory_unlock(727274)').catch(() => {});

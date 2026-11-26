@@ -104,6 +104,10 @@ export interface InvoiceSummary {
   total: number
   paid: number
   balance: number
+  /** '' made in the app; 'harvest' a past invoice imported from Harvest */
+  source: string
+  /** the stored original PDF, if any */
+  fileName: string | null
 }
 
 export interface UnbilledLine {
@@ -185,7 +189,16 @@ const keys = {
 export const useInvoiceSettings = () =>
   useQuery({ queryKey: keys.settings, queryFn: async () => (await api.get<{ data: InvoiceSettings }>('/settings/invoicing')).data })
 
-export const useInvoices = () => useQuery({ queryKey: keys.list, queryFn: () => getAll<InvoiceSummary>('/invoices'), staleTime: 0 })
+/** Invoices made in the app. */
+export const useInvoices = () =>
+  useQuery({ queryKey: keys.list, queryFn: () => getAll<InvoiceSummary>('/invoices', { source: 'app' }), staleTime: 0 })
+
+/** Past invoices imported from Harvest (paid in full; their original PDFs are stored). */
+export const useHarvestInvoices = () =>
+  useQuery({ queryKey: ['invoices', 'harvest'], queryFn: () => getAll<InvoiceSummary>('/invoices', { source: 'harvest' }) })
+
+/** Opens an imported invoice's original PDF. */
+export const invoiceFileUrl = (id: string) => `/api/invoices/${id}/file`
 
 export const useInvoice = (id: string | undefined) =>
   useQuery({

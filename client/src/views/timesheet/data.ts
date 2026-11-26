@@ -38,8 +38,9 @@ export const useWeekTrips = (resourceId: string, week: string) =>
   })
 
 /** Number of timesheets waiting for approval (the badge on the Approvals tab). */
-export const useSubmittedCount = () =>
+export const useSubmittedCount = (enabled = true) =>
   useQuery({
+    enabled,
     queryKey: ['timesheets', 'submittedCount'],
     queryFn: async () => (await api.get<List<unknown>>(`/timesheets${qs({ status: 'submitted', limit: 1 })}`)).total,
     refetchInterval: 60_000,

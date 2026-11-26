@@ -1,0 +1,22 @@
+/* Sign-in page and the signed-in user in the header. */
+
+.signin{min-height:100vh;display:grid;place-items:center;padding:24px;background:var(--navy, var(--sunk))}
+.signin-card{width:min(420px,100%);padding:28px;display:flex;flex-direction:column;gap:14px}
+.signin-card h1{margin:0}
+.signin-brand{font-size:15px;letter-spacing:.02em}
+.signin-brand span{color:var(--muted)}
+.signin-ms{justify-content:center;padding-block:10px}
+.signin-error{margin:0;padding:10px 12px;border-radius:var(--r);background:color-mix(in srgb,var(--bad) 10%,var(--surface));color:var(--bad)}
+.signin-dev{display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--line-soft);padding-top:14px}
+.signin-users{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.signin-users .btn{width:100%;justify-content:space-between}
+.signin-form{display:flex;flex-direction:column;gap:10px}
+.signin-form label{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:var(--muted)}
+
+/* A thin strip above the brand and nav, so the nav keeps its full width. */
+.whoami{order:-1;flex-basis:100%;display:flex;justify-content:flex-end;align-items:center;gap:8px;margin-bottom:-6px;font-size:12px;color:var(--header-muted, var(--muted))}
+.whoami b{color:var(--header-ink, var(--ink));font-weight:500}
+.whoami .btn.quiet{color:var(--header-ink, var(--ink));border-color:var(--header-line, var(--line))}
+.whoami .btn.quiet:hover{background:var(--navy-deep, var(--sunk))}
+
+.readonly-note{margin:0 0 4px}

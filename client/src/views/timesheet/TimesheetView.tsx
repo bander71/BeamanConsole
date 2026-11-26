@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { useSearchParams } from 'react-router'
+import { useMe } from '../../api/auth.ts'
 import { monday, today, addDays, weekLabel } from '../../lib/format.ts'
 import { TimesheetSheet } from './TimesheetSheet.tsx'
 import { useResources } from './data.ts'
@@ -18,10 +19,14 @@ const remembered = () => {
 export function TimesheetView() {
   const [params, setParams] = useSearchParams()
   const resourcesQ = useResources()
-  const resources = (resourcesQ.data ?? []).filter((r) => r.active || r.id === params.get('resource'))
+  // Roles limited to their own timesheet see only the person linked to their user.
+  const me = useMe()
+  const ownOnly = !me.permissions.isAdmin && !!me.permissions.areas.timesheets?.ownOnly
+  const resources = (resourcesQ.data ?? [])
+    .filter((r) => (ownOnly ? r.id === me.user.resourceId : r.active || r.id === params.get('resource')))
     .sort((a, b) => a.name.localeCompare(b.name))
 
-  const resourceId = params.get('resource') ?? remembered() ?? resources[0]?.id ?? ''
+  const resourceId = ownOnly ? (me.user.resourceId ?? '') : (params.get('resource') ?? remembered() ?? resources[0]?.id ?? '')
   const resource = resources.find((r) => r.id === resourceId) ?? resources[0]
   const weekParam = params.get('week')
   const week = weekParam && /^\d{4}-\d{2}-\d{2}$/.test(weekParam) ? monday(weekParam) : monday(today())
@@ -40,6 +45,14 @@ export function TimesheetView() {
 
   if (resourcesQ.isPending) return <div className="panel empty">Loading timesheet…</div>
   if (resourcesQ.isError) return <div className="panel empty"><h2>Couldn't load timesheets</h2><p className="note">{resourcesQ.error.message}</p></div>
+  if (!resource && ownOnly) {
+    return (
+      <div className="panel empty">
+        <h2>You're not linked to a timesheet yet</h2>
+        <p className="note" style={{ margin: '8px auto 0' }}>Ask an admin to link your user to your name under Users.</p>
+      </div>
+    )
+  }
   if (!resource) {
     return (
       <div className="panel empty">

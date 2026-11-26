@@ -8,7 +8,7 @@ import { addDays, fh2, fm, fm2, md, parse, shortDate, today } from '../../lib/fo
 import { useAccounts } from '../accounts/data.ts'
 import { useProjects } from '../timesheet/data.ts'
 import {
-  DEFAULT_ANCHOR, STATUS_LABEL, periodLabel, periodOf, recentPeriods, useCreateInvoice, useInvoiceSettings, useInvoices,
+  DEFAULT_ANCHOR, STATUS_LABEL, invoiceFileUrl, periodLabel, periodOf, recentPeriods, useCreateInvoice, useHarvestInvoices, useInvoiceSettings, useInvoices,
   useInvoicingStats, useSaveSettings, useUnbilled, type InvoiceSettings, type InvoiceStatus,
 } from './data.ts'
 import { downloadInvoiceList } from './files.tsx'
@@ -271,7 +271,63 @@ function InvoiceList() {
           </table>
         </div>
       </section>
+
+      <PastInvoices />
     </>
+  )
+}
+
+/** Invoices sent from Harvest before Beaman Console, all paid in full, with their original PDFs. */
+function PastInvoices() {
+  const q = useHarvestInvoices()
+  const list = q.data ?? []
+  if (!list.length) return null
+  const total = list.reduce((s, i) => s + i.total, 0)
+  return (
+    <section className="panel">
+      <div className="panel-h">
+        <h2>Past invoices (Harvest)</h2>
+        <span className="note">
+          {list.length} invoices, {fm2(total)}, paid in full. Sent from Harvest before Beaman Console; they count in Accounting and Reports.
+        </span>
+      </div>
+      <div className="scroll">
+        <table style={{ minWidth: 640 }}>
+          <thead>
+            <tr>
+              <th>Invoice</th>
+              <th>Client</th>
+              <th>Issued</th>
+              <th className="n">Total</th>
+              <th>Status</th>
+              <th />
+            </tr>
+          </thead>
+          <tbody>
+            {list.map((i) => (
+              <tr key={i.id}>
+                <td className="num">{i.number}</td>
+                <td>{i.accountName || i.billToName}</td>
+                <td className="num">{shortDate(i.issueDate)}</td>
+                <td className="n num">{fm2(i.total)}</td>
+                <td>
+                  <StatusPill s={i.displayStatus} />
+                </td>
+                <td className="n">
+                  {i.fileName ? (
+                    <a className="btn sm" href={invoiceFileUrl(i.id)} target="_blank" rel="noopener">
+                      View PDF
+                    </a>
+                  ) : (
+                    <span className="note">No PDF</span>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
   )
 }
 

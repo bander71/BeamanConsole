@@ -5,10 +5,9 @@
 //
 // Running it again with the same file imports nothing new.
 
-import { spawnSync } from 'node:child_process';
-import { existsSync, mkdirSync, readdirSync, readFileSync, statSync } from 'node:fs';
-import { join } from 'node:path';
+import { readFileSync } from 'node:fs';
 import { pool } from '../src/db.ts';
+import { backup } from './backup.ts';
 import { importHarvest, type HarvestReport, type HarvestRow } from '../src/harvestImport.ts';
 
 const args = process.argv.slice(2);
@@ -60,22 +59,6 @@ const rows: HarvestRow[] = data
   }))
   .filter((r) => r.hours > 0);
 
-// ---- back up the database first ----
-function backup(): string {
-  const pgRoot = 'C:\\Program Files\\PostgreSQL';
-  const bin = existsSync(pgRoot)
-    ? readdirSync(pgRoot).map((v) => join(pgRoot, v, 'bin', 'pg_dump.exe')).filter((p) => existsSync(p)).sort().pop()
-    : undefined;
-  const pgDump = bin ?? 'pg_dump';
-  // Same folder as the database (see scripts/setup-local.ps1), not AppData.
-  const dir = join(process.env.USERPROFILE ?? '.', 'BeamanConsoleData', 'backups');
-  mkdirSync(dir, { recursive: true });
-  const out = join(dir, `beaman_console_${new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)}_before-harvest.dump`);
-  const r = spawnSync(pgDump, ['--format=custom', `--file=${out}`, `--dbname=${process.env.DATABASE_URL}`], { stdio: ['ignore', 'inherit', 'inherit'] });
-  if (r.status !== 0 || !existsSync(out) || statSync(out).size === 0) throw new Error('The backup failed, so nothing was imported.');
-  return out;
-}
-
 // ---- run ----
 const print = (r: HarvestReport) => {
   console.log(`\n${r.applied ? 'IMPORTED' : 'DRY RUN (nothing saved)'}: ${r.rows} Harvest entries, ${r.hours} h`);
@@ -91,7 +74,7 @@ const print = (r: HarvestReport) => {
 
 const client = await pool.connect();
 try {
-  if (apply) console.log(`Backed up the database to ${backup()}`);
+  if (apply) console.log(`Backed up the database to ${backup('harvest')}`);
   await client.query('BEGIN');
   const report = await importHarvest(client, rows, apply);
   await client.query(apply ? 'COMMIT' : 'ROLLBACK');

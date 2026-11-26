@@ -25,9 +25,9 @@ export const ACTIVITY_TYPES = ['Note', 'Call', 'Meeting', 'Lunch', 'Email', 'Tex
 export const TRIP_KINDS = ['business', 'charitable'] as const;
 export const PAYMENT_METHODS = ['ACH', 'Check', 'Card', 'Wire', 'Cash', 'Other'] as const;
 export const EXPENSE_CATEGORIES = [
-  'Contractors (1099)', 'Software & subscriptions', 'Travel', 'Meals', 'Vehicle & fuel',
+  'Contractors (1099)', 'Wages & payroll', 'Software & subscriptions', 'Travel', 'Meals', 'Vehicle & fuel',
   'Office & supplies', 'Insurance', 'Professional fees', 'Marketing', 'Equipment',
-  'Taxes & licenses', 'Bank & payment fees', 'Other expense',
+  'Taxes & licenses', 'Income tax payments', 'Bank & payment fees', 'Other expense',
 ] as const;
 export const INCOME_CATEGORIES = ['Consulting revenue (outside invoices)', 'Reimbursements', 'Interest', 'Other income'] as const;
 
@@ -248,6 +248,7 @@ const trips: ResourceDef = {
   search: ['client_name', 'contact_name', 'purpose', 'route'],
   dateColumn: 'trip_date',
   orderBy: 'trip_date DESC, created_at DESC',
+  owner: { area: 'mileage', field: 'resourceId' },
 };
 
 const ledgerEntries: ResourceDef = {

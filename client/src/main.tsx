@@ -3,6 +3,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router'
 import { App } from './App.tsx'
+import { AuthGate } from './components/SignIn.tsx'
 import { ToastProvider } from './components/Toast.tsx'
 import './styles/console.css'
 import './styles/brand.css'
@@ -18,7 +19,9 @@ createRoot(document.getElementById('root')!).render(
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <ToastProvider>
-          <App />
+          <AuthGate>
+            <App />
+          </AuthGate>
         </ToastProvider>
       </BrowserRouter>
     </QueryClientProvider>

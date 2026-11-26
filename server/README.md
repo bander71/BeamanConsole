@@ -47,6 +47,8 @@ The quick way is `scripts\setup-local.ps1` (see the [main README](../README.md#r
 | `npm start` | Start the API |
 | `npm run migrate` | Apply any new files in `db/migrations` |
 | `npm run import:harvest -- <file.csv> [--apply]` | Import a Harvest detailed time report. Without `--apply` it's a dry run that prints what would happen; with it, it backs up the database to `%LOCALAPPDATA%\BeamanConsole\backups` first. Re-running imports nothing new. Rules and the project/task mapping are in [`src/harvestImport.ts`](src/harvestImport.ts) |
+| `npm run import:harvest-invoices -- <file.zip or folder> [--apply]` | Import past Harvest invoice PDFs as sent invoices, paid in full on their due date, numbered `H-<Harvest number>`. Reads them with `pdftotext` (comes with Git for Windows), stores the PDFs in `<data folder>\invoice-files`, backs up the database first with `--apply`, and skips invoices already imported. Rules: [`src/harvestInvoices.ts`](src/harvestInvoices.ts) |
+| `npm run import:ledger -- <file.tsv> [--apply]` | Import expenses from a tab-separated spreadsheet export (DESCRIPTION, DATE, AMOUNT, CATEGORY) into the ledger, mapping the sheet's categories to the app's. INCOME rows are skipped because those checks are already invoice payments. Backs up the database first with `--apply` and skips rows already imported. |
 | `npm test` | Run the API tests (needs a test database; see below) |
 | `npm run typecheck` | Check types with TypeScript |
 
@@ -64,7 +66,64 @@ Then create `server/.env.test` with:
 DATABASE_URL=postgres://postgres:YOUR_PASSWORD@localhost:5432/beaman_console_test
 ```
 
-Run `npm test`. The tests create the tables themselves.
+Run `npm test`. The tests create the tables themselves. Requests in the tests are signed in as an admin; use `signInAs('Employee', …)` and `apiAs(token, …)` from `helpers.ts` to act as another role.
+
+## Sign-in and permissions
+
+Everything under `/api` except `/health` and `/auth/*` needs a signed-in user, and each request is checked against the user's role.
+
+### Users and roles
+
+- People sign in with their **Microsoft work account** (Entra ID). An admin adds each person under **Users & roles** first (link in the header, admins only). The first sign-in links the Microsoft account to the user by email.
+- Each user has one **role**. Built-in roles: **Admin** (everything, including users and roles), **Manager**, **Accounting**, **Employee** and **Viewer**. Admins can change any role's grid except Admin's, and add roles of their own.
+- A role gives **Create / Read / Update / Delete** per area: Timesheet, Approvals, Budgets, Mileage, Pipeline, Accounts, Contacts, Invoices, Accounting, Reports, Employees and Setup. Timesheet and Mileage can also be limited to **own records only**: the user's work is tied to the person ("resource") linked to their user.
+- Lists other screens need for drop-downs (projects, tasks, resources, vehicles, employees, mileage rates, invoice settings) can be read by anyone signed in. They include task bill and cost rates.
+- Which area and action each endpoint needs is in [`src/auth/permissions.ts`](src/auth/permissions.ts) (`RULES`). An endpoint without a rule is refused for everyone but admins, so a new endpoint needs a rule.
+- There is always at least one active admin: the API refuses changes that would leave none.
+- Every change (and refused attempt) goes in `audit_log`, shown under Users & roles.
+
+### Sessions
+
+- After sign-in the browser gets an http-only, SameSite=Lax cookie holding a random token. Only the token's SHA-256 is stored, in `sessions`.
+- A session ends after `SESSION_IDLE_HOURS` (default 12) without use, and after 7 days regardless. Turning a user off ends their sessions at once. A role change applies on their next request.
+- Changes (`POST`/`PUT`/`PATCH`/`DELETE`) sent from another website are refused.
+
+### Settings (`server/.env`)
+
+| Setting | What it's for |
+|---|---|
+| `ENTRA_TENANT_ID`, `ENTRA_CLIENT_ID`, `ENTRA_CLIENT_SECRET` | The app registration for Microsoft sign-in. Microsoft sign-in is off until all three are set |
+| `APP_URL` | Where people open the app. Default `http://localhost:5173`. Microsoft sends people back to `<APP_URL>/api/auth/callback` |
+| `ADMIN_EMAILS` | Comma-separated emails that become admins on their first Microsoft sign-in, if no user has that email yet. Use it to get the first admin in |
+| `AUTH_DEV_LOGIN` | `true` shows a "sign in as" list on the sign-in page, for development. It only works from this computer (localhost) and is always off on Azure App Service. While there are no users, it lets you create the first admin |
+| `SESSION_IDLE_HOURS` | Hours without use before a session ends. Default 12 |
+
+### Setting up Microsoft sign-in
+
+1. In the [Microsoft Entra admin center](https://entra.microsoft.com), go to **App registrations → New registration**.
+   - Name: `Beaman Console`.
+   - Supported account types: **Accounts in this organizational directory only** (single tenant).
+   - Redirect URI: platform **Web**, `http://localhost:5173/api/auth/callback`. On Azure, add `https://<your app address>/api/auth/callback` too.
+2. On the app's **Overview** page, copy the **Directory (tenant) ID** and **Application (client) ID** into `ENTRA_TENANT_ID` and `ENTRA_CLIENT_ID`.
+3. Under **Certificates & secrets → New client secret**, make a secret and copy its **Value** into `ENTRA_CLIENT_SECRET`. Note when it expires.
+4. Set `ADMIN_EMAILS` to your work email (or add yourself as an admin first with `AUTH_DEV_LOGIN`).
+5. Restart the API. The sign-in page now shows **Sign in with Microsoft**.
+
+The app asks only for `openid profile email`, which needs no admin consent.
+
+### Endpoints
+
+| Request | What it does |
+|---|---|
+| `GET /auth/options` | `{ microsoft, dev }`: which sign-in methods are on |
+| `GET /auth/login?returnTo=/path` | Sends the browser to Microsoft |
+| `GET /auth/callback` | Microsoft sends the browser back here; starts the session |
+| `POST /auth/logout` | Ends the session |
+| `GET /auth/me` | The user, their role, their permissions and the list of areas. `401` when not signed in |
+| `GET /auth/dev/users`, `POST /auth/dev/login` | Development sign-in (`AUTH_DEV_LOGIN`): `{ userId }`, or `{ email, name }` to make the first admin while there are no users |
+| `GET/POST /admin/users`, `PATCH/DELETE /admin/users/:id` | Users: `{ email, name?, roleId, resourceId?, active? }`. Admins only |
+| `GET/POST /admin/roles`, `PATCH/DELETE /admin/roles/:id` | Roles: `{ name, description?, permissions: { <area>: { create, read, update, delete, ownOnly } } }`. `permissions` replaces the whole grid. Built-in roles can't be deleted; roles in use can't be deleted |
+| `GET /admin/audit?limit=` | The latest changes, newest first |
 
 ## Endpoints
 
@@ -192,7 +251,7 @@ An invoice comes back with its lines, the time entries each time line bills, its
 |---|---|
 | `GET /invoices/unbilled?accountId=&from=&to=&includeUnapproved=&includeFlatFee=` | Billable time not yet on an invoice, grouped by account, with the lines a new invoice would get. Unapproved time is included by default; Flat Fee time isn't |
 | `POST /invoices` | Create a draft: `{ accountId, from?, to?, cadence?, issueDate?, includeUnapproved?, includeFlatFee?, blank? }`. Pulls in unbilled time, one line per task. Bill-to comes from the account; terms and tax come from invoice settings |
-| `GET /invoices?accountId=&status=&from=&to=&q=` | List with totals. `status` is a displayStatus; `from`/`to` filter on issue date; `q` searches number and client |
+| `GET /invoices?accountId=&status=&from=&to=&q=&source=` | List with totals. `source=app` lists invoices made in the app, `source=harvest` past invoices imported from Harvest (both when left out). `status` is a displayStatus; `from`/`to` filter on issue date; `q` searches number and client |
 | `GET /invoices/:id` | One invoice |
 | `PATCH /invoices/:id` | Edit a draft: header fields, and optionally `lines` to replace all lines (see below) |
 | `POST /invoices/:id/send` | Draft → sent (needs at least one line) |
@@ -201,6 +260,7 @@ An invoice comes back with its lines, the time entries each time line bills, its
 | `DELETE /invoices/:id` | Delete a draft, freeing its hours |
 | `POST /invoices/:id/payments` | Record a payment on a sent invoice: `{ paymentDate?, amount, method?, reference? }`. Can't be more than the balance |
 | `DELETE /invoices/:id/payments/:paymentId` | Remove a payment |
+| `GET /invoices/:id/file` | The original PDF of an imported invoice, shown in the browser. Files live in `<data folder>\invoice-files`; the data folder is `%USERPROFILE%\BeamanConsoleData` unless `BEAMAN_DATA_DIR` is set |
 
 Editing lines: send the full list in the order you want.
 
@@ -253,6 +313,8 @@ Errors look like `{ "error": { "message": "...", "details": ... } }`.
 | Status | When |
 |---|---|
 | 400 | Bad or missing fields, unknown fields, a value not in an allowed list, malformed JSON, or a link to a record that doesn't exist |
+| 401 | Not signed in, or the session ended |
+| 403 | The user's role doesn't allow it, it's someone else's record in an "own records only" area, or a change came from another website |
 | 404 | The record or endpoint doesn't exist |
 | 409 | A duplicate (e.g. same account name), or deleting a record other records still use |
 
@@ -265,12 +327,18 @@ src/
 ├── config.ts       Reads settings from the environment
 ├── db.ts           Postgres pool, type handling, camelCase conversion
 ├── errors.ts       Turns validation and database errors into HTTP responses
-├── migrate.ts      Migration runner (npm run migrate)
+├── migrate.ts      Migration runner (npm run migrate); also adds the built-in roles
+├── auth/
+│   ├── permissions.ts  Areas, the rule for each endpoint, built-in roles
+│   └── session.ts      Session cookie, sign-in check, permission check, audit log
+├── harvestInvoices.ts  Harvest invoice import: reading the PDF text, importing as paid invoices
 ├── harvestImport.ts  Harvest time import: mapping and rules (run by scripts/import-harvest.ts)
 ├── crud.ts         Builds standard routes from a resource definition
 ├── resources.ts    Field rules for each standard resource
 ├── importHelpers.ts  Matching rules shared by the contact imports
 └── routes/
+    ├── auth.ts        Microsoft sign-in, development sign-in, sign-out, who am I
+    ├── admin.ts       Users, roles, audit log (admins only)
     ├── extra.ts       Endpoints that don't fit the standard pattern
     ├── contactImport.ts  LinkedIn connections import
     ├── outlookImport.ts  Outlook contacts import
@@ -278,19 +346,21 @@ src/
     ├── invoices.ts    Unbilled time, drafts, lines, send/void, payments
     └── reports.ts     Budgets, time, P&L, receivables, contractors, mileage
 scripts/
+├── backup.ts          Backs up the database before an import
+├── import-harvest-invoices.ts  Unpacks and reads Harvest invoice PDFs, stores them, imports (npm run import:harvest-invoices)
+├── import-ledger.ts           Imports expenses from a spreadsheet export into the ledger (npm run import:ledger)
 └── import-harvest.ts   Reads a Harvest CSV, backs up, imports (npm run import:harvest)
 test/
-├── helpers.ts           Starts the app against the test database
+├── helpers.ts           Starts the app against the test database, signed in as an admin
+├── auth.test.ts         Sign-in, sessions, every role's rights, own records, users and roles
 ├── api.test.ts
 ├── contactImport.test.ts
 ├── timesheets.test.ts
 ├── invoices.test.ts
 ├── harvestImport.test.ts
+├── harvestInvoices.test.ts
 └── reports.test.ts      Checks every report against hand-worked numbers
 ```
 
 To add a simple table, add a definition to `resources.ts`.
 
-## Not built yet
-
-- **Sign-in and permissions.** Right now anyone who can reach the API can change anything, so run it only on your own machine until sign-in is added.

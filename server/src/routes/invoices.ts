@@ -9,9 +9,12 @@
 // be on only one invoice. Voiding or deleting an invoice frees its hours.
 // Tax rates are fractions: 0.0865 means 8.65%.
 
+import { existsSync } from 'node:fs';
+import { basename, join } from 'node:path';
 import { Router } from 'express';
 import type pg from 'pg';
 import { z } from 'zod';
+import { config } from '../config.ts';
 import { camelRow, pool, transaction } from '../db.ts';
 import { HttpError, notFound } from '../errors.ts';
 import { PAYMENT_METHODS } from '../resources.ts';
@@ -237,6 +240,8 @@ const listQuery = z.object({
   from: z.iso.date().optional(),
   to: z.iso.date().optional(),
   q: z.string().trim().max(100).optional(),
+  /** app: made in the app; harvest: past invoices imported from Harvest. Both when left out. */
+  source: z.enum(['app', 'harvest']).optional(),
   limit: z.coerce.number().int().min(1).max(500).default(100),
   offset: z.coerce.number().int().min(0).default(0),
 });
@@ -253,6 +258,7 @@ invoiceRoutes.get('/invoices', async (req, res) => {
   if (f.status) add('display_status = ?', f.status);
   if (f.from) add('issue_date >= ?', f.from);
   if (f.to) add('issue_date <= ?', f.to);
+  if (f.source) add('source = ?', f.source === 'app' ? '' : f.source);
   if (f.q) add('(number ILIKE ? OR account_name ILIKE ? OR bill_to_name ILIKE ?)', '%' + f.q.replace(/[\\%_]/g, '\\$&') + '%');
 
   const base = `WITH list AS (
@@ -267,6 +273,17 @@ invoiceRoutes.get('/invoices', async (req, res) => {
     values,
   );
   res.json({ data: rows.map(camelRow), total: count.n, limit: f.limit, offset: f.offset });
+});
+
+// GET /invoices/:id/file -> the original PDF of an imported invoice (opens in the browser)
+invoiceRoutes.get('/invoices/:id/file', async (req, res) => {
+  const { rows: [inv] } = await pool.query('SELECT number, file_name FROM invoices WHERE id = $1', [idParam(req.params.id)]);
+  if (!inv) throw notFound('Invoice');
+  // basename: the stored name is only ever a file in invoice-files, never a path elsewhere.
+  const file = inv.file_name ? join(config.dataDir, 'invoice-files', basename(inv.file_name)) : '';
+  if (!file || !existsSync(file)) throw new HttpError(404, `There's no file for invoice ${inv.number}`);
+  res.type('application/pdf').setHeader('Content-Disposition', `inline; filename="Invoice ${String(inv.number).replace(/"/g, '')}.pdf"`);
+  res.sendFile(file);
 });
 
 invoiceRoutes.get('/invoices/:id', async (req, res) => {
