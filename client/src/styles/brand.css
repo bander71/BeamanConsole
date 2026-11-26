@@ -1,0 +1,51 @@
+/* Beaman brand colors ("Option 1": navy header, gold highlights).
+   Loaded after console.css, which stays as the prototype's stylesheet.
+   Palette: gold #C69A2D, light gray #D5D5D5, bright blue #00AEFF, navy #01205D, deep navy #001C28. */
+
+:root{
+  --navy:#01205D; --navy-deep:#001C28;
+  --gold:#C69A2D; --gold-ink:#001C28; --gold-text:#8a6714; --gold-soft:#f6eedb;
+  --sky:#00AEFF; --sky-soft:#e3f5ff; --sky-text:#00639a;
+  --accent:#01205D; --accent-ink:#ffffff; --accent-soft:#e3e9f4;
+  --header-ink:#ffffff; --header-muted:#c3cddb; --header-line:rgba(255,255,255,.18);
+  --heading:#01205D;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --gold-text:#d9b04a; --gold-soft:#3a2f12;
+  --sky-soft:#0b3550; --sky-text:#7fd3ff;
+  --accent:#59c4ff; --accent-ink:#001C28; --accent-soft:#0f3047;
+  --heading:var(--ink);
+}}
+:root[data-theme="dark"]{
+  --gold-text:#d9b04a; --gold-soft:#3a2f12;
+  --sky-soft:#0b3550; --sky-text:#7fd3ff;
+  --accent:#59c4ff; --accent-ink:#001C28; --accent-soft:#0f3047;
+  --heading:var(--ink);
+}
+
+/* Top bar: solid navy in both light and dark mode. */
+.top{background:var(--navy);border-bottom-color:var(--navy-deep)}
+body::before{background:var(--navy)}
+.brand b{color:var(--header-ink)}
+.brand span{color:var(--gold)}
+nav button{color:var(--header-muted)}
+nav button:hover{color:var(--header-ink)}
+nav button[aria-current="page"]{color:var(--header-ink);border-bottom:3px solid var(--gold)}
+.navsep{background:var(--header-line)}
+nav .badge{background:var(--gold);color:var(--gold-ink);font-weight:600}
+.sync{color:var(--header-muted)}
+.top nav{scrollbar-width:thin;scrollbar-color:var(--header-line) transparent}
+
+/* Headings in navy; small labels in gold. */
+h1{color:var(--heading)}
+.eyebrow{color:var(--gold-text)}
+
+/* Main buttons are gold with deep navy text. */
+.btn.primary{background:var(--gold);border-color:var(--gold);color:var(--gold-ink)}
+.btn.primary:hover{background:#d4a83a;border-color:#d4a83a}
+
+/* Bright blue marks the box you're typing in and billable work. */
+:focus-visible{outline-color:var(--sky)}
+input.h:focus{border-color:var(--sky);box-shadow:0 0 0 2px var(--sky-soft)}
+input.memo:focus{border-color:var(--sky)}
+.chip.bill{background:var(--sky-soft);color:var(--sky-text)}
