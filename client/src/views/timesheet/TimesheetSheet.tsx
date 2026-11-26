@@ -154,7 +154,7 @@ export function TimesheetSheet({ resource, week }: { resource: Resource; week: s
     edit(lines.map((l, i) => (i === row ? { ...l, hours: l.hours.map((x, d) => (d === day ? h : x)) } : l)))
   const setNote = (row: number, note: string) => edit(lines.map((l, i) => (i === row ? { ...l, note } : l)))
   const removeLine = (row: number) => {
-    if (lines[row]!.billed.some(Boolean)) return toast("This line has hours on an invoice, so it can't be removed.")
+    if (lines[row]!.billed.some(Boolean)) return toast("This line has hours that were already billed, so it can't be removed.")
     edit(lines.filter((_, i) => i !== row), true)
   }
   const addLine = () => {
@@ -292,7 +292,7 @@ export function TimesheetSheet({ resource, week }: { resource: Resource; week: s
                   {l.hours.map((h, day) => (
                     <td key={day} className={'cell' + (day > 4 ? ' we' : '')}>
                       <HourCell value={h} row={row} day={day} label={`${name} ${DAYS[day]}`}
-                        disabled={locked || l.billed[day]!} title={l.billed[day] ? 'On an invoice' : undefined}
+                        disabled={locked || l.billed[day]!} title={l.billed[day] ? 'Already billed' : undefined}
                         onChange={(v) => setHours(row, day, v)} />
                     </td>
                   ))}

@@ -5,7 +5,8 @@ PostgreSQL schema for Beaman Console.
 ```
 db/
 ├── migrations/   Numbered SQL files, applied in order
-│   └── 001_initial_schema.sql
+│   ├── 001_initial_schema.sql
+│   └── 002_time_billed_outside.sql   Time billed outside the app; where imported time came from
 └── tests/
     └── smoke_test.sql   Inserts sample data, checks the rules, rolls back
 ```
@@ -65,7 +66,7 @@ The prototype stores one JSON object in browser storage, with one collection per
 
 ## Views
 
-- **`time_detail`**: every hour logged, with task, project, account, rates, timesheet status, and whether it has been billed. Budgets, reports and "ready to invoice" build on this.
+- **`time_detail`**: every hour logged, with task, project, account, rates, timesheet status, and whether it has been billed (on an invoice, or billed outside the app). Budgets, reports and "ready to invoice" build on this.
 - **`invoice_totals`**: subtotal, tax, total, paid and balance for each invoice.
 
 ## Rules the database enforces
@@ -76,6 +77,7 @@ These were checks in the prototype's JavaScript. Now the database enforces them,
 - One timesheet per resource per week, and the week starts on Monday.
 - A day's hours must be above 0 and at most 24.
 - A time entry can't be billed on two invoices.
+- `time_entries.billed_outside` marks hours already invoiced elsewhere (for example in Harvest). They count in reports but are treated as billed. `time_entries.source` says where imported time came from (`harvest`), so imports can be re-run safely.
 - A ledger entry under "Contractors (1099)" must name the contractor.
 - A project that still has tasks can't be deleted.
 

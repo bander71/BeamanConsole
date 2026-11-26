@@ -46,6 +46,7 @@ The quick way is `scripts\setup-local.ps1` (see the [main README](../README.md#r
 | `npm run dev` | Start the API and restart on code changes |
 | `npm start` | Start the API |
 | `npm run migrate` | Apply any new files in `db/migrations` |
+| `npm run import:harvest -- <file.csv> [--apply]` | Import a Harvest detailed time report. Without `--apply` it's a dry run that prints what would happen; with it, it backs up the database to `%LOCALAPPDATA%\BeamanConsole\backups` first. Re-running imports nothing new. Rules and the project/task mapping are in [`src/harvestImport.ts`](src/harvestImport.ts) |
 | `npm test` | Run the API tests (needs a test database; see below) |
 | `npm run typecheck` | Check types with TypeScript |
 
@@ -155,7 +156,7 @@ Rules:
 - Hours can change only while a sheet is draft or returned. Otherwise the API returns `409`.
 - Each task appears once per sheet, must belong to that resource, and must be active to be added. A line already on the sheet keeps working if its task is deactivated later.
 - Each day's hours are 0–24 per line, and the day's total across lines can't exceed 24.
-- Hours that are on an invoice (`billed: true`) can't be changed or removed, and their sheet can't be deleted.
+- Hours that are billed (`billed: true`: on an invoice, or billed outside the app, such as time imported from Harvest as already invoiced) can't be changed or removed, and their sheet can't be deleted.
 - Copy-previous skips tasks already on the week and tasks that are now inactive.
 
 ### Invoices
@@ -265,6 +266,7 @@ src/
 ├── db.ts           Postgres pool, type handling, camelCase conversion
 ├── errors.ts       Turns validation and database errors into HTTP responses
 ├── migrate.ts      Migration runner (npm run migrate)
+├── harvestImport.ts  Harvest time import: mapping and rules (run by scripts/import-harvest.ts)
 ├── crud.ts         Builds standard routes from a resource definition
 ├── resources.ts    Field rules for each standard resource
 ├── importHelpers.ts  Matching rules shared by the contact imports
@@ -275,12 +277,15 @@ src/
     ├── timesheets.ts  Weekly grid, status flow, copy-previous
     ├── invoices.ts    Unbilled time, drafts, lines, send/void, payments
     └── reports.ts     Budgets, time, P&L, receivables, contractors, mileage
+scripts/
+└── import-harvest.ts   Reads a Harvest CSV, backs up, imports (npm run import:harvest)
 test/
 ├── helpers.ts           Starts the app against the test database
 ├── api.test.ts
 ├── contactImport.test.ts
 ├── timesheets.test.ts
 ├── invoices.test.ts
+├── harvestImport.test.ts
 └── reports.test.ts      Checks every report against hand-worked numbers
 ```
 

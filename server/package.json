@@ -11,6 +11,7 @@
     "start": "node --env-file-if-exists=.env src/index.ts",
     "dev": "node --env-file-if-exists=.env --watch src/index.ts",
     "migrate": "node --env-file-if-exists=.env src/migrate.ts",
+    "import:harvest": "node --env-file-if-exists=.env scripts/import-harvest.ts",
     "test": "node --env-file-if-exists=.env.test --test --test-concurrency=1 \"test/**/*.test.ts\"",
     "typecheck": "tsc"
   },

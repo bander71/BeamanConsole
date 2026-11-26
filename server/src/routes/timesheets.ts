@@ -96,7 +96,7 @@ async function loadSheet(db: Queryable, id: string) {
     [id],
   );
   const entriesRes = await db.query(
-    `SELECT te.timesheet_line_id, te.work_date, te.hours, (b.time_entry_id IS NOT NULL) AS billed
+    `SELECT te.timesheet_line_id, te.work_date, te.hours, (b.time_entry_id IS NOT NULL OR te.billed_outside) AS billed
      FROM time_entries te
      JOIN timesheet_lines tl ON tl.id = te.timesheet_line_id
      LEFT JOIN invoice_line_time_entries b ON b.time_entry_id = te.id
@@ -291,7 +291,7 @@ timesheetRoutes.put('/resources/:resourceId/timesheets/:weekStart', async (req, 
     }
 
     const { rows: entries } = await client.query(
-      `SELECT te.id, te.timesheet_line_id, te.work_date, te.hours, (b.time_entry_id IS NOT NULL) AS billed
+      `SELECT te.id, te.timesheet_line_id, te.work_date, te.hours, (b.time_entry_id IS NOT NULL OR te.billed_outside) AS billed
        FROM time_entries te JOIN timesheet_lines tl ON tl.id = te.timesheet_line_id
        LEFT JOIN invoice_line_time_entries b ON b.time_entry_id = te.id
        WHERE tl.timesheet_id = $1`,
@@ -300,7 +300,7 @@ timesheetRoutes.put('/resources/:resourceId/timesheets/:weekStart', async (req, 
     const entryKey = (lineId: string, date: string) => lineId + '|' + date;
     const entryMap = new Map(entries.map((e) => [entryKey(e.timesheet_line_id, e.work_date), e]));
     const billedError = (date: string) =>
-      new HttpError(409, `Hours on ${date} are already on an invoice and can't be changed`);
+      new HttpError(409, `Hours on ${date} are already billed and can't be changed`);
 
     // Remove lines that are no longer on the grid.
     const keep = new Set(taskIds);
@@ -440,6 +440,11 @@ timesheetRoutes.delete('/timesheets/:id', async (req, res) => {
     const { rows: [sheet] } = await client.query('SELECT status FROM timesheets WHERE id = $1 FOR UPDATE', [id]);
     if (!sheet) throw notFound('Timesheet');
     assertEditable(sheet.status);
+    // Hours billed outside the app are kept like invoiced hours (those are protected by a foreign key).
+    const { rows: [outside] } = await client.query(
+      `SELECT 1 FROM time_entries te JOIN timesheet_lines tl ON tl.id = te.timesheet_line_id
+       WHERE tl.timesheet_id = $1 AND te.billed_outside LIMIT 1`, [id]);
+    if (outside) throw new HttpError(409, "This timesheet has hours that were already billed, so it can't be deleted");
     await client.query('DELETE FROM timesheets WHERE id = $1', [id]);
   });
   res.status(204).end();
