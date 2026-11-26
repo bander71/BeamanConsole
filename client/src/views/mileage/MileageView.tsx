@@ -6,6 +6,7 @@ import { isAllTime, RANGE_LABELS, rangeDates, type Range } from '../../lib/perio
 import { useAccounts } from '../accounts/data.ts'
 import { useContacts } from '../contacts/data.ts'
 import { useResources } from '../timesheet/data.ts'
+import { TollsSection } from './TollsSection.tsx'
 import { TripForm } from './TripForm.tsx'
 import { rateLookup, useRates, useTrips, useVehicles } from './data.ts'
 
@@ -285,6 +286,10 @@ export function MileageView() {
         </div>
       </section>
       <p className="note">Each trip is valued at the IRS standard rate in effect on its date. Rates and vehicles are kept under Setup.</p>
+
+      <TollsSection trips={list} vehName={vehName}
+        periodLabel={isAllTime(period) ? 'all dates' : `${parse(period[0]).toLocaleDateString()} – ${parse(period[1]).toLocaleDateString()}`}
+        fileSuffix={isAllTime(period) ? 'all' : `${period[0]}_to_${period[1]}`} />
     </>
   )
 }
