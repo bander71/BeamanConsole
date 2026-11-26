@@ -67,7 +67,8 @@ function backup(): string {
     ? readdirSync(pgRoot).map((v) => join(pgRoot, v, 'bin', 'pg_dump.exe')).filter((p) => existsSync(p)).sort().pop()
     : undefined;
   const pgDump = bin ?? 'pg_dump';
-  const dir = join(process.env.LOCALAPPDATA ?? '.', 'BeamanConsole', 'backups');
+  // Same folder as the database (see scripts/setup-local.ps1), not AppData.
+  const dir = join(process.env.USERPROFILE ?? '.', 'BeamanConsoleData', 'backups');
   mkdirSync(dir, { recursive: true });
   const out = join(dir, `beaman_console_${new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)}_before-harvest.dump`);
   const r = spawnSync(pgDump, ['--format=custom', `--file=${out}`, `--dbname=${process.env.DATABASE_URL}`], { stdio: ['ignore', 'inherit', 'inherit'] });

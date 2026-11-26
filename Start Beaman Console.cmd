@@ -4,9 +4,14 @@ rem in their own windows, then opens the browser. Close the two windows to stop 
 rem the database stops when Windows shuts down. First time? Run setup first (see README.md).
 cd /d "%~dp0"
 
-if not exist "server\.env" goto setup
-set "PGDATA=%LOCALAPPDATA%\BeamanConsole\pgdata"
-if not exist "%PGDATA%\PG_VERSION" goto setup
+rem The app's data folder. Not under AppData: apps like Claude Desktop can give programs they
+rem start a private copy of AppData, which hides the database from everything else.
+set "BCDATA=%USERPROFILE%\BeamanConsoleData"
+set "PGDATA=%BCDATA%\pgdata"
+set "MISSING="
+if not exist "server\.env" set "MISSING=%~dp0server\.env"
+if not exist "%PGDATA%\PG_VERSION" set "MISSING=%PGDATA%"
+if defined MISSING goto setup
 
 rem Find the PostgreSQL programs (the newest version installed).
 set "PGBIN="
@@ -20,9 +25,9 @@ if not defined PGBIN (
 "%PGBIN%\pg_ctl.exe" status -D "%PGDATA%" >nul 2>&1
 if errorlevel 1 (
   echo Starting the database...
-  "%PGBIN%\pg_ctl.exe" start -D "%PGDATA%" -l "%LOCALAPPDATA%\BeamanConsole\postgres.log" -w >nul
+  "%PGBIN%\pg_ctl.exe" start -D "%PGDATA%" -l "%BCDATA%\postgres.log" -w >nul
   if errorlevel 1 (
-    echo The database didn't start. See %LOCALAPPDATA%\BeamanConsole\postgres.log
+    echo The database didn't start. See %BCDATA%\postgres.log
     pause
     exit /b 1
   )
@@ -38,7 +43,9 @@ start "" http://localhost:5173
 exit /b 0
 
 :setup
-echo Beaman Console isn't set up yet. Run this once in PowerShell, from this folder:
+echo Beaman Console isn't set up yet: it couldn't find %MISSING%
+echo.
+echo Run this once in PowerShell, from this folder:
 echo   powershell -ExecutionPolicy Bypass -File scripts\setup-local.ps1
 pause
 exit /b 1

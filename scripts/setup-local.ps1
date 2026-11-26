@@ -17,8 +17,10 @@
 param(
   # A Postgres connection URL to copy all data from (only into a new, empty database).
   [string]$CopyFrom = '',
-  # Where the database files live. Outside OneDrive, so syncing can't damage them.
-  [string]$DataDir = (Join-Path $env:LOCALAPPDATA 'BeamanConsole\pgdata'),
+  # Where the database files live. Outside OneDrive, so syncing can't damage them, and outside
+  # AppData, because apps like Claude Desktop can give programs they start a private copy of
+  # AppData, which would hide the database from "Start Beaman Console.cmd".
+  [string]$DataDir = (Join-Path $env:USERPROFILE 'BeamanConsoleData\pgdata'),
   [int]$Port = 5433,
   [string]$Database = 'beaman_console_dev',
   [string]$AppUser = 'beaman_app'

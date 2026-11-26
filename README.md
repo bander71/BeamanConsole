@@ -45,7 +45,9 @@ powershell -ExecutionPolicy Bypass -File scripts\setup-local.ps1
 
 It gives the app its own database, using the PostgreSQL programs already installed but without needing the `postgres` password:
 
-- The data lives in `%LOCALAPPDATA%\BeamanConsole\pgdata` (outside OneDrive, so syncing can't damage it), on port 5433, reachable only from this computer.
+- The data lives in `%USERPROFILE%\BeamanConsoleData\pgdata`, on port 5433, reachable only from this computer. Backups from the Harvest import go in `%USERPROFILE%\BeamanConsoleData\backups`.
+  - It's outside OneDrive, so syncing can't damage it.
+  - It's outside AppData on purpose: apps like Claude Desktop can give programs they start a private copy of AppData, which would hide the database from the launcher you double-click.
 - It makes up a password for the app's database user and saves it in `server/.env`, which git ignores.
 - It installs packages if needed and creates the tables. Add `-CopyFrom "postgres://user@host:port/dbname"` to copy all data from another database into the new one.
 - Running it again is safe: it keeps the database and its data.
